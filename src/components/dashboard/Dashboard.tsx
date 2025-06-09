@@ -12,7 +12,8 @@ import {
   Heart,
   Trash2,
   Mic,
-  Phone
+  Phone,
+  AlertCircle
 } from 'lucide-react'
 import VoiceChat from '../voice/VoiceChat'
 
@@ -25,8 +26,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
 
-  // Get ElevenLabs agent ID from environment variables
+  // Get ElevenLabs configuration from environment variables
+  const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
   const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID || ''
+
+  // Debug: Log environment variables (remove in production)
+  console.log('ElevenLabs Config:', {
+    hasApiKey: !!ELEVENLABS_API_KEY,
+    hasAgentId: !!ELEVENLABS_AGENT_ID,
+    apiKeyLength: ELEVENLABS_API_KEY.length,
+    agentIdLength: ELEVENLABS_AGENT_ID.length
+  })
 
   useEffect(() => {
     if (user) {
@@ -205,6 +215,9 @@ export default function Dashboard() {
     }
   }
 
+  // Check if voice chat is properly configured
+  const isVoiceChatConfigured = ELEVENLABS_API_KEY && ELEVENLABS_AGENT_ID
+
   return (
     <div className="h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -250,7 +263,7 @@ export default function Dashboard() {
             <span>New Text Chat</span>
           </button>
           
-          {ELEVENLABS_AGENT_ID && (
+          {isVoiceChatConfigured ? (
             <button
               onClick={() => setIsVoiceChatOpen(true)}
               className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
@@ -258,6 +271,16 @@ export default function Dashboard() {
               <Phone className="h-5 w-5" />
               <span>Start Voice Chat</span>
             </button>
+          ) : (
+            <div className="w-full bg-gray-100 border-2 border-dashed border-gray-300 px-4 py-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-gray-500 mb-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">Voice Chat Setup Required</span>
+              </div>
+              <p className="text-xs text-gray-600">
+                Add VITE_ELEVENLABS_AGENT_ID to your .env file to enable voice chat
+              </p>
+            </div>
           )}
         </div>
 
@@ -312,7 +335,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
-                {ELEVENLABS_AGENT_ID && (
+                {isVoiceChatConfigured && (
                   <button
                     onClick={() => setIsVoiceChatOpen(true)}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -333,7 +356,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
                   <p className="text-gray-500 mb-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
-                  {ELEVENLABS_AGENT_ID && (
+                  {isVoiceChatConfigured && (
                     <button
                       onClick={() => setIsVoiceChatOpen(true)}
                       className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
@@ -415,7 +438,7 @@ export default function Dashboard() {
                 >
                   Start Text Chat
                 </button>
-                {ELEVENLABS_AGENT_ID && (
+                {isVoiceChatConfigured ? (
                   <button
                     onClick={() => setIsVoiceChatOpen(true)}
                     className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full"
@@ -423,6 +446,16 @@ export default function Dashboard() {
                     <Phone className="h-5 w-5" />
                     <span>Start Voice Chat</span>
                   </button>
+                ) : (
+                  <div className="bg-gray-100 border-2 border-dashed border-gray-300 px-6 py-3 rounded-lg">
+                    <div className="flex items-center justify-center space-x-2 text-gray-500 mb-1">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Voice Chat Setup Required</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      Add VITE_ELEVENLABS_AGENT_ID to enable voice features
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -431,7 +464,7 @@ export default function Dashboard() {
       </div>
 
       {/* Voice Chat Modal */}
-      {ELEVENLABS_AGENT_ID && (
+      {isVoiceChatConfigured && (
         <VoiceChat
           isOpen={isVoiceChatOpen}
           onClose={() => setIsVoiceChatOpen(false)}
