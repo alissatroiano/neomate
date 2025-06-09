@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react'
-import ElevenLabsProvider from '@elevenlabs/react'
+import { ElevenLabsProvider } from '@elevenlabs/react'
 
 interface VoiceContextType {
   // Add any voice-related state or methods here
