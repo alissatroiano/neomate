@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Eye, EyeOff, Heart, Mail, Lock, User, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Heart, Mail, Lock, User, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface AuthFormProps {
@@ -18,6 +18,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,13 +29,21 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
       let result
       if (mode === 'signup') {
         result = await signUp(formData.email, formData.password, formData.fullName)
+        if (!result.error) {
+          setShowEmailVerification(true)
+          return
+        }
       } else {
         result = await signIn(formData.email, formData.password)
       }
 
       if (result.error) {
-        setError(result.error.message)
-      } else {
+        if (result.error.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before signing in.')
+        } else {
+          setError(result.error.message)
+        }
+      } else if (mode === 'signin') {
         onSuccess?.()
       }
     } catch (err) {
@@ -49,6 +58,67 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
       ...prev,
       [e.target.name]: e.target.value
     }))
+  }
+
+  if (showEmailVerification) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-6">
+              <div className="bg-gradient-to-r from-green-600 to-green-700 p-3 rounded-xl">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">Neomate</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Check Your Email
+            </h2>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+              <Mail className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+              <p className="text-gray-700 leading-relaxed">
+                We've sent a confirmation email to <strong>{formData.email}</strong>. 
+                Please click the link in the email to verify your account and complete your registration.
+              </p>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-sm text-amber-800 font-medium mb-1">Important:</p>
+                  <p className="text-sm text-amber-700">
+                    After clicking the confirmation link, you'll be redirected back to Neomate where you can sign in with your new account.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowEmailVerification(false)}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                Back to Sign In
+              </button>
+              
+              <p className="text-sm text-gray-500">
+                Didn't receive the email? Check your spam folder or{' '}
+                <button 
+                  onClick={() => {
+                    setShowEmailVerification(false)
+                    setFormData(prev => ({ ...prev, password: '' }))
+                  }}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  try signing up again
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -78,7 +148,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           <div className="space-y-4">
             {mode === 'signup' && (
               <div>
-                <label htmlFor="fullName\" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
@@ -157,6 +227,18 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
               )}
             </div>
           </div>
+
+          {mode === 'signup' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Email Verification Required</p>
+                  <p>After creating your account, you'll receive a confirmation email. Please verify your email address before signing in.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
