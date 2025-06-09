@@ -6,7 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import Dashboard from './components/dashboard/Dashboard'
 import LandingPage from './components/LandingPage'
 
-// You'll need to set this environment variable
+// Get ElevenLabs API key from environment variables
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
 
 function App() {
@@ -24,7 +24,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </VoiceProvider>

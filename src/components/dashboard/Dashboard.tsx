@@ -25,8 +25,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
 
-  // You'll need to set these from your ElevenLabs dashboard
-  const ELEVENLABS_AGENT_ID = process.env.REACT_APP_ELEVENLABS_AGENT_ID || 'your-agent-id'
+  // Get ElevenLabs agent ID from environment variables
+  const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID || ''
 
   useEffect(() => {
     if (user) {
@@ -250,13 +250,15 @@ export default function Dashboard() {
             <span>New Text Chat</span>
           </button>
           
-          <button
-            onClick={() => setIsVoiceChatOpen(true)}
-            className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-          >
-            <Phone className="h-5 w-5" />
-            <span>Start Voice Chat</span>
-          </button>
+          {ELEVENLABS_AGENT_ID && (
+            <button
+              onClick={() => setIsVoiceChatOpen(true)}
+              className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+            >
+              <Phone className="h-5 w-5" />
+              <span>Start Voice Chat</span>
+            </button>
+          )}
         </div>
 
         {/* Conversations List */}
@@ -310,13 +312,15 @@ export default function Dashboard() {
                   </div>
                 </div>
                 
-                <button
-                  onClick={() => setIsVoiceChatOpen(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <Mic className="h-4 w-4" />
-                  <span>Voice Chat</span>
-                </button>
+                {ELEVENLABS_AGENT_ID && (
+                  <button
+                    onClick={() => setIsVoiceChatOpen(true)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Mic className="h-4 w-4" />
+                    <span>Voice Chat</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -329,13 +333,15 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
                   <p className="text-gray-500 mb-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
-                  <button
-                    onClick={() => setIsVoiceChatOpen(true)}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
-                  >
-                    <Phone className="h-5 w-5" />
-                    <span>Try Voice Chat</span>
-                  </button>
+                  {ELEVENLABS_AGENT_ID && (
+                    <button
+                      onClick={() => setIsVoiceChatOpen(true)}
+                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+                    >
+                      <Phone className="h-5 w-5" />
+                      <span>Try Voice Chat</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -409,13 +415,15 @@ export default function Dashboard() {
                 >
                   Start Text Chat
                 </button>
-                <button
-                  onClick={() => setIsVoiceChatOpen(true)}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full"
-                >
-                  <Phone className="h-5 w-5" />
-                  <span>Start Voice Chat</span>
-                </button>
+                {ELEVENLABS_AGENT_ID && (
+                  <button
+                    onClick={() => setIsVoiceChatOpen(true)}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full"
+                  >
+                    <Phone className="h-5 w-5" />
+                    <span>Start Voice Chat</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -423,12 +431,14 @@ export default function Dashboard() {
       </div>
 
       {/* Voice Chat Modal */}
-      <VoiceChat
-        isOpen={isVoiceChatOpen}
-        onClose={() => setIsVoiceChatOpen(false)}
-        agentId={ELEVENLABS_AGENT_ID}
-        onConversationEnd={handleVoiceConversationEnd}
-      />
+      {ELEVENLABS_AGENT_ID && (
+        <VoiceChat
+          isOpen={isVoiceChatOpen}
+          onClose={() => setIsVoiceChatOpen(false)}
+          agentId={ELEVENLABS_AGENT_ID}
+          onConversationEnd={handleVoiceConversationEnd}
+        />
+      )}
     </div>
   )
 }
