@@ -77,6 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const getRedirectUrl = () => {
+    // Check if we're in production
+    if (window.location.hostname === 'neomate.app' || window.location.hostname.includes('netlify.app')) {
+      return 'https://neomate.app/dashboard'
+    }
+    // For development
+    return `${window.location.origin}/dashboard`
+  }
+
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -86,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: getRedirectUrl(),
         },
       })
       return { error }
