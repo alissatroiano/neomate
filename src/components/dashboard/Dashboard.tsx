@@ -10,8 +10,11 @@ import {
   LogOut, 
   Settings,
   Heart,
-  Trash2
+  Trash2,
+  Mic,
+  Phone
 } from 'lucide-react'
+import VoiceChat from '../voice/VoiceChat'
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth()
@@ -20,6 +23,10 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
+
+  // You'll need to set these from your ElevenLabs dashboard
+  const ELEVENLABS_AGENT_ID = process.env.REACT_APP_ELEVENLABS_AGENT_ID || 'your-agent-id'
 
   useEffect(() => {
     if (user) {
@@ -190,6 +197,14 @@ export default function Dashboard() {
     }
   }
 
+  const handleVoiceConversationEnd = (summary: string) => {
+    // Optionally save the voice conversation summary to the current text conversation
+    if (activeConversation && summary) {
+      // You could add the summary as a message or create a new conversation
+      console.log('Voice conversation ended with summary:', summary)
+    }
+  }
+
   return (
     <div className="h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -225,14 +240,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* New Conversation Button */}
-        <div className="p-4">
+        {/* Action Buttons */}
+        <div className="p-4 space-y-3">
           <button
             onClick={createNewConversation}
             className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
           >
             <Plus className="h-5 w-5" />
-            <span>New Conversation</span>
+            <span>New Text Chat</span>
+          </button>
+          
+          <button
+            onClick={() => setIsVoiceChatOpen(true)}
+            className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+          >
+            <Phone className="h-5 w-5" />
+            <span>Start Voice Chat</span>
           </button>
         </div>
 
@@ -276,14 +299,24 @@ export default function Dashboard() {
           <>
             {/* Chat Header */}
             <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center space-x-3">
-                <div className="bg-green-600 p-2 rounded-full">
-                  <Bot className="h-5 w-5 text-white" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-green-600 p-2 rounded-full">
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Neomate AI Assistant</h2>
+                    <p className="text-sm text-gray-500">Always here to support you</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Neomate AI Assistant</h2>
-                  <p className="text-sm text-gray-500">Always here to support you</p>
-                </div>
+                
+                <button
+                  onClick={() => setIsVoiceChatOpen(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <Mic className="h-4 w-4" />
+                  <span>Voice Chat</span>
+                </button>
               </div>
             </div>
 
@@ -295,7 +328,14 @@ export default function Dashboard() {
                     <MessageCircle className="h-8 w-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
-                  <p className="text-gray-500">Ask me anything about neonatal care, or just share how you're feeling.</p>
+                  <p className="text-gray-500 mb-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
+                  <button
+                    onClick={() => setIsVoiceChatOpen(true)}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Phone className="h-5 w-5" />
+                    <span>Try Voice Chat</span>
+                  </button>
                 </div>
               )}
 
@@ -361,17 +401,34 @@ export default function Dashboard() {
             <div className="text-center">
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
-              <p className="text-gray-500 mb-6">Create a new conversation to start chatting with your AI assistant</p>
-              <button
-                onClick={createNewConversation}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Start Chatting
-              </button>
+              <p className="text-gray-500 mb-6">Choose how you'd like to connect with your AI assistant</p>
+              <div className="space-y-3">
+                <button
+                  onClick={createNewConversation}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors block w-full"
+                >
+                  Start Text Chat
+                </button>
+                <button
+                  onClick={() => setIsVoiceChatOpen(true)}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full"
+                >
+                  <Phone className="h-5 w-5" />
+                  <span>Start Voice Chat</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Voice Chat Modal */}
+      <VoiceChat
+        isOpen={isVoiceChatOpen}
+        onClose={() => setIsVoiceChatOpen(false)}
+        agentId={ELEVENLABS_AGENT_ID}
+        onConversationEnd={handleVoiceConversationEnd}
+      />
     </div>
   )
 }
