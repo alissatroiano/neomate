@@ -1,0 +1,88 @@
+import React from 'react';
+import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+
+export default function Footer() {
+  return (
+    <footer className="bg-gray-900 text-white py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <Heart className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold">Neomate</span>
+            </div>
+            <p className="text-gray-400 leading-relaxed">
+              Providing compassionate AI support for families navigating 
+              neonatal care and hospitalization.
+            </p>
+            <div className="flex space-x-4">
+              <div className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
+                <Heart className="h-5 w-5" />
+              </div>
+              <div className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
+                <Mail className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Quick Links</h3>
+            <div className="space-y-2">
+              <a href="#features" className="block text-gray-400 hover:text-white transition-colors">Features</a>
+              <a href="#about" className="block text-gray-400 hover:text-white transition-colors">About Us</a>
+              <a href="#testimonials" className="block text-gray-400 hover:text-white transition-colors">Success Stories</a>
+              <a href="#contact" className="block text-gray-400 hover:text-white transition-colors">Contact</a>
+            </div>
+          </div>
+
+          {/* Resources */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Resources</h3>
+            <div className="space-y-2">
+              <a href="#" className="block text-gray-400 hover:text-white transition-colors">NICU Guide</a>
+              <a href="#" className="block text-gray-400 hover:text-white transition-colors">Support Groups</a>
+              <a href="#" className="block text-gray-400 hover:text-white transition-colors">Medical Resources</a>
+              <a href="#" className="block text-gray-400 hover:text-white transition-colors">FAQ</a>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Get in Touch</h3>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <Mail className="h-5 w-5 text-blue-400" />
+                <span className="text-gray-400">support@neomate.ai</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Phone className="h-5 w-5 text-blue-400" />
+                <span className="text-gray-400">1-800-NEOMATE</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-blue-400" />
+                <span className="text-gray-400">Available Nationwide</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <p className="text-gray-400 text-sm">
+              © 2024 Neomate. All rights reserved. HIPAA compliant and secure.
+            </p>
+            <div className="flex space-x-6 text-sm">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Accessibility</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
