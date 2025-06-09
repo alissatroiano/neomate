@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Mic, MicOff, Volume2, VolumeX, Phone, PhoneOff } from 'lucide-react'
-import { useConversation } from '@elevenlabs/react'
+//import { useConversation } from '@elevenlabs/react'
 
 interface VoiceChatProps {
   isOpen: boolean
