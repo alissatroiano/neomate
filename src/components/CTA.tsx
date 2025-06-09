@@ -1,7 +1,11 @@
 import React from 'react';
 import { ArrowRight, Heart, MessageCircle } from 'lucide-react';
 
-export default function CTA() {
+interface CTAProps {
+  onGetStarted: () => void;
+}
+
+export default function CTA({ onGetStarted }: CTAProps) {
   return (
     <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,7 +21,10 @@ export default function CTA() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-50 transition-all duration-300 flex items-center space-x-3 group font-semibold">
+            <button 
+              onClick={onGetStarted}
+              className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-50 transition-all duration-300 flex items-center space-x-3 group font-semibold"
+            >
               <MessageCircle className="h-5 w-5" />
               <span>Start Chatting Now</span>
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

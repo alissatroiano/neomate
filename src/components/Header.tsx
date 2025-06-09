@@ -4,9 +4,10 @@ import { Heart, Menu, X } from 'lucide-react';
 interface HeaderProps {
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
+  onGetStarted: () => void;
 }
 
-export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen }: HeaderProps) {
+export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetStarted }: HeaderProps) {
   return (
     <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +26,10 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen }: Header
             <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</a>
             <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">Stories</a>
             <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={onGetStarted}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               Get Started
             </button>
           </nav>
@@ -51,7 +55,10 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen }: Header
               <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</a>
               <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">Stories</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors w-full">
+              <button 
+                onClick={onGetStarted}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors w-full"
+              >
                 Get Started
               </button>
             </nav>
