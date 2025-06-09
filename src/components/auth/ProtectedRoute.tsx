@@ -30,10 +30,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 function AuthPage() {
   const [mode, setMode] = React.useState<'signin' | 'signup'>('signin')
 
+  const handleSuccess = () => {
+    // This will be handled by the auth context automatically
+    console.log('Authentication successful')
+  }
+
   return (
     <AuthForm
       mode={mode}
       onToggleMode={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+      onSuccess={handleSuccess}
     />
   )
 }
