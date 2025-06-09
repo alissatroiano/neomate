@@ -148,7 +148,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           <div className="space-y-4">
             {mode === 'signup' && (
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="fullName\" className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
