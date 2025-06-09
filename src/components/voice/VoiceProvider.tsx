@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from 'react'
-import { ElevenLabsProvider } from '@elevenlabs/react'
 
 interface VoiceContextType {
   // Add any voice-related state or methods here
@@ -26,10 +25,8 @@ export function VoiceProvider({ children, apiKey }: VoiceProviderProps) {
   }
 
   return (
-    <ElevenLabsProvider apiKey={apiKey}>
       <VoiceContext.Provider value={value}>
         {children}
       </VoiceContext.Provider>
-    </ElevenLabsProvider>
   )
 }
