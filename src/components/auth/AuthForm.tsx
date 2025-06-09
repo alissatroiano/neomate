@@ -60,6 +60,16 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
     }))
   }
 
+  const handleBackToSignIn = () => {
+    setShowEmailVerification(false)
+    setFormData({ email: '', password: '', fullName: '' })
+    setError(null)
+    // Switch to sign-in mode if we're currently in signup mode
+    if (mode === 'signup') {
+      onToggleMode()
+    }
+  }
+
   if (showEmailVerification) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -96,7 +106,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
 
             <div className="space-y-4">
               <button
-                onClick={() => setShowEmailVerification(false)}
+                onClick={handleBackToSignIn}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
               >
                 Back to Sign In
@@ -148,7 +158,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           <div className="space-y-4">
             {mode === 'signup' && (
               <div>
-                <label htmlFor="fullName\" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
