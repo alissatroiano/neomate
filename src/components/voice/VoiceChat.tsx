@@ -15,6 +15,42 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
   const [isListening, setIsListening] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected')
   const [error, setError] = useState<string | null>(null)
+  const [signedUrl, setSignedUrl] = useState<string | null>(null)
+
+  // Get signed URL from our server function
+  useEffect(() => {
+    if (isOpen && agentId) {
+      fetchSignedUrl()
+    }
+  }, [isOpen, agentId])
+
+  const fetchSignedUrl = async () => {
+    try {
+      setConnectionStatus('connecting')
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/elevenlabs-auth?agent_id=${agentId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to get signed URL')
+      }
+
+      const data = await response.json()
+      setSignedUrl(data.signed_url)
+      setError(null)
+    } catch (error) {
+      console.error('Error fetching signed URL:', error)
+      setError('Failed to connect to voice service. Please try again.')
+      setConnectionStatus('disconnected')
+    }
+  }
 
   const handleStatusChange = (status: any) => {
     console.log('Voice chat status:', status)
@@ -42,6 +78,7 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
     setIsConnected(false)
     setConnectionStatus('disconnected')
     setIsListening(false)
+    setSignedUrl(null)
     onClose()
   }
 
@@ -103,9 +140,10 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
 
         {/* ElevenLabs Conversation Component */}
         <div className="flex justify-center">
-          {!isConnected ? (
+          {!isConnected && signedUrl ? (
             <Conversation
               agentId={agentId}
+              signedUrl={signedUrl}
               onStatusChange={handleStatusChange}
               onModeChange={handleModeChange}
               onError={handleError}
@@ -116,7 +154,12 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
                 <span>Start Voice Chat</span>
               </button>
             </Conversation>
-          ) : (
+          ) : !signedUrl && connectionStatus === 'connecting' ? (
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-gray-600">Preparing voice chat...</p>
+            </div>
+          ) : isConnected ? (
             <div className="text-center space-y-4">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-full w-24 h-24 mx-auto flex items-center justify-center">
                 {isListening ? (
@@ -129,14 +172,15 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
                 {isListening ? 'Listening to you...' : 'AI is speaking...'}
               </p>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Controls */}
         <div className="flex justify-center space-x-4">
-          {isConnected && (
+          {isConnected && signedUrl && (
             <Conversation
               agentId={agentId}
+              signedUrl={signedUrl}
               onStatusChange={handleStatusChange}
               onModeChange={handleModeChange}
               onError={handleError}
