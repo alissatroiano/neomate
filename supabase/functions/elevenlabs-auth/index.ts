@@ -49,7 +49,7 @@ serve(async (req: Request) => {
 
     // Set up request headers with ElevenLabs API key
     const requestHeaders: HeadersInit = new Headers()
-    requestHeaders.set("xi-api-key", Deno.env.get("ELEVENLABS_API_KEY") || "")
+    requestHeaders.set("xi-api-key", Deno.env.get("VITE_ELEVENLABS_API_KEY") || "")
 
     // Make request to ElevenLabs API for signed URL
     const response = await fetch(

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Mic, MicOff, Volume2, VolumeX, Phone, PhoneOff } from 'lucide-react'
+import { Mic, Volume2, Phone, PhoneOff } from 'lucide-react'
 import { useConversation } from '@elevenlabs/react'
+// import .env variables for Supabase URL and API key
 
 interface VoiceChatProps {
   isOpen: boolean
@@ -9,7 +10,7 @@ interface VoiceChatProps {
   onConversationEnd?: (summary: string) => void
 }
 
-export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd }: VoiceChatProps) {
+export default function VoiceChat({ isOpen, onClose, agentId }: VoiceChatProps) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -46,12 +47,13 @@ export default function VoiceChat({ isOpen, onClose, agentId, onConversationEnd 
       
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/elevenlabs-auth?agent_id=${agentId}`,
-        {
+        `${supabaseUrl}/api/voice/get-signed-url?agentId=${agentId}`
+        , {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
-          },
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          }
         }
       )
 

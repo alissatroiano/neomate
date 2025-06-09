@@ -1,8 +1,9 @@
-import React, { createContext, useContext, ReactNode } from 'react'
-import { ElevenLabsProvider } from '@elevenlabs/react'
+import { createContext, useContext, ReactNode } from 'react'
+'use client';
 
 interface VoiceContextType {
-  // Add any voice-related state or methods here
+  stability: number;
+  similarity_boost: number;
 }
 
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined)
@@ -15,21 +16,23 @@ export function useVoice() {
   return context
 }
 
+
 interface VoiceProviderProps {
   children: ReactNode
   apiKey: string
+  stability?: number
 }
 
-export function VoiceProvider({ children, apiKey }: VoiceProviderProps) {
-  const value = {
-    // Add voice-related state and methods here
+
+export function VoiceProvider({ children, stability = 0.5 }: VoiceProviderProps) {
+  const value: VoiceContextType = {
+    stability,
+    similarity_boost: 0.5, // You can adjust the default value as needed
   }
 
   return (
-    <ElevenLabsProvider apiKey={apiKey}>
       <VoiceContext.Provider value={value}>
         {children}
       </VoiceContext.Provider>
-    </ElevenLabsProvider>
   )
 }
