@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase, Conversation, Message } from '../../lib/supabase'
+import { generateChatResponse, generateConversationTitle } from '../../lib/openai'
 import { 
   MessageCircle, 
   Plus, 
@@ -17,9 +18,9 @@ import {
   Menu,
   X,
   ArrowLeft,
-  Edit3,
+  Edit2,
   Check,
-  XCircle
+  XIcon
 } from 'lucide-react'
 import VoiceChat from '../voice/VoiceChat'
 
@@ -33,19 +34,15 @@ export default function Dashboard() {
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
-  const [editTitleValue, setEditTitleValue] = useState('')
+  const [editTitle, setEditTitle] = useState('')
 
-  // Get ElevenLabs configuration from environment variables with fallbacks
+  // Get ElevenLabs configuration from environment variables
   const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
   const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID || ''
 
-  // Debug: Log environment variables (remove in production)
-  console.log('ElevenLabs Config:', {
-    hasApiKey: !!ELEVENLABS_API_KEY,
-    hasAgentId: !!ELEVENLABS_AGENT_ID,
-    apiKeyLength: ELEVENLABS_API_KEY.length,
-    agentIdLength: ELEVENLABS_AGENT_ID.length
-  })
+  // Check if OpenAI is configured
+  const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
+  const isOpenAIConfigured = !!OPENAI_API_KEY
 
   useEffect(() => {
     if (user) {
@@ -101,80 +98,6 @@ export default function Dashboard() {
     }
   }
 
-  const generateConversationTitle = (userMessage: string): string => {
-    // Extract key topics and create a meaningful title
-    const message = userMessage.toLowerCase()
-    
-    // NICU-specific keywords
-    if (message.includes('nicu') || message.includes('intensive care')) {
-      return 'NICU Support Chat'
-    }
-    if (message.includes('premature') || message.includes('preemie') || message.includes('weeks')) {
-      return 'Premature Baby Support'
-    }
-    if (message.includes('feeding') || message.includes('bottle') || message.includes('breastfeed')) {
-      return 'Feeding Guidance'
-    }
-    if (message.includes('monitor') || message.includes('machine') || message.includes('equipment')) {
-      return 'Medical Equipment Questions'
-    }
-    if (message.includes('scared') || message.includes('worried') || message.includes('anxious')) {
-      return 'Emotional Support'
-    }
-    if (message.includes('discharge') || message.includes('home') || message.includes('going home')) {
-      return 'Discharge Planning'
-    }
-    if (message.includes('weight') || message.includes('growth')) {
-      return 'Growth & Development'
-    }
-    if (message.includes('breathing') || message.includes('oxygen') || message.includes('ventilator')) {
-      return 'Breathing Support'
-    }
-    if (message.includes('sleep') || message.includes('tired') || message.includes('exhausted')) {
-      return 'Rest & Self-Care'
-    }
-    if (message.includes('partner') || message.includes('family') || message.includes('sibling')) {
-      return 'Family Support'
-    }
-    
-    // General emotional keywords
-    if (message.includes('help') || message.includes('support')) {
-      return 'Support & Guidance'
-    }
-    if (message.includes('question') || message.includes('understand') || message.includes('explain')) {
-      return 'Questions & Information'
-    }
-    
-    // Fallback: Use first few words of the message
-    const words = userMessage.split(' ').slice(0, 4).join(' ')
-    return words.length > 30 ? words.substring(0, 30) + '...' : words || 'New Conversation'
-  }
-
-  const updateConversationTitle = async (conversationId: string, title: string) => {
-    try {
-      const { error } = await supabase
-        .from('conversations')
-        .update({ title })
-        .eq('id', conversationId)
-
-      if (error) {
-        console.error('Error updating conversation title:', error)
-        return
-      }
-
-      // Update local state
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, title }
-            : conv
-        )
-      )
-    } catch (error) {
-      console.error('Error updating conversation title:', error)
-    }
-  }
-
   const createNewConversation = async () => {
     if (!user) return
 
@@ -203,43 +126,27 @@ export default function Dashboard() {
     }
   }
 
-  const callChatGPT = async (userMessage: string, conversationHistory: Message[]) => {
+  const updateConversationTitle = async (conversationId: string, newTitle: string) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/chat-completion`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userMessage,
-            messages: conversationHistory
-          })
-        }
-      )
+      const { error } = await supabase
+        .from('conversations')
+        .update({ title: newTitle })
+        .eq('id', conversationId)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('ChatGPT API error:', errorData)
-        
-        // Return fallback response if available
-        if (errorData.fallback) {
-          return errorData.fallback
-        }
-        
-        throw new Error('Failed to get AI response')
+      if (error) {
+        console.error('Error updating conversation title:', error)
+        return
       }
 
-      const data = await response.json()
-      return data.response
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, title: newTitle }
+            : conv
+        )
+      )
     } catch (error) {
-      console.error('Error calling ChatGPT:', error)
-      
-      // Fallback response for any errors
-      return "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
+      console.error('Error updating conversation title:', error)
     }
   }
 
@@ -272,30 +179,83 @@ export default function Dashboard() {
 
       setMessages(prev => [...prev, userMessageData])
 
-      // Check if this is the first message and update title if it's still "New Conversation"
+      // Check if this is the first message and update title if needed
       const currentConversation = conversations.find(c => c.id === activeConversation)
-      if (currentConversation && currentConversation.title === 'New Conversation') {
-        const newTitle = generateConversationTitle(userMessage)
-        await updateConversationTitle(activeConversation, newTitle)
+      if (currentConversation && currentConversation.title === 'New Conversation' && isOpenAIConfigured) {
+        try {
+          const newTitle = await generateConversationTitle(userMessage)
+          await updateConversationTitle(activeConversation, newTitle)
+        } catch (error) {
+          console.error('Error generating conversation title:', error)
+        }
       }
 
-      // Get AI response from ChatGPT
-      const aiResponse = await callChatGPT(userMessage, messages)
-      
-      const { data: aiMessageData, error: aiError } = await supabase
-        .from('messages')
-        .insert([
-          {
-            conversation_id: activeConversation,
-            content: aiResponse,
-            role: 'assistant',
-          },
-        ])
-        .select()
-        .single()
+      // Generate AI response
+      if (isOpenAIConfigured) {
+        try {
+          // Get conversation history for context
+          const conversationHistory = [...messages, userMessageData].map(msg => ({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content
+          }))
 
-      if (!aiError) {
-        setMessages(prev => [...prev, aiMessageData])
+          const aiResponse = await generateChatResponse(conversationHistory)
+          
+          const { data: aiMessageData, error: aiError } = await supabase
+            .from('messages')
+            .insert([
+              {
+                conversation_id: activeConversation,
+                content: aiResponse,
+                role: 'assistant',
+              },
+            ])
+            .select()
+            .single()
+
+          if (!aiError) {
+            setMessages(prev => [...prev, aiMessageData])
+          }
+        } catch (error) {
+          console.error('Error generating AI response:', error)
+          // Add fallback response
+          const fallbackResponse = "I'm experiencing some technical difficulties right now, but I want you to know that your concerns are valid and important. Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have."
+          
+          const { data: fallbackMessageData } = await supabase
+            .from('messages')
+            .insert([
+              {
+                conversation_id: activeConversation,
+                content: fallbackResponse,
+                role: 'assistant',
+              },
+            ])
+            .select()
+            .single()
+
+          if (fallbackMessageData) {
+            setMessages(prev => [...prev, fallbackMessageData])
+          }
+        }
+      } else {
+        // Fallback response when OpenAI is not configured
+        const fallbackResponse = "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
+        
+        const { data: fallbackMessageData } = await supabase
+          .from('messages')
+          .insert([
+            {
+              conversation_id: activeConversation,
+              content: fallbackResponse,
+              role: 'assistant',
+            },
+          ])
+          .select()
+          .single()
+
+        if (fallbackMessageData) {
+          setMessages(prev => [...prev, fallbackMessageData])
+        }
       }
       
       setLoading(false)
@@ -327,30 +287,29 @@ export default function Dashboard() {
     }
   }
 
-  const startEditingTitle = (conversation: Conversation) => {
-    setEditingTitle(conversation.id)
-    setEditTitleValue(conversation.title)
-  }
-
-  const saveTitle = async () => {
-    if (!editingTitle || !editTitleValue.trim()) return
-
-    await updateConversationTitle(editingTitle, editTitleValue.trim())
-    setEditingTitle(null)
-    setEditTitleValue('')
-  }
-
-  const cancelEditingTitle = () => {
-    setEditingTitle(null)
-    setEditTitleValue('')
-  }
-
   const handleVoiceConversationEnd = (summary: string) => {
     // Optionally save the voice conversation summary to the current text conversation
     if (activeConversation && summary) {
-      // You could add the summary as a message or create a new conversation
       console.log('Voice conversation ended with summary:', summary)
     }
+  }
+
+  const handleEditTitle = (conversationId: string, currentTitle: string) => {
+    setEditingTitle(conversationId)
+    setEditTitle(currentTitle)
+  }
+
+  const handleSaveTitle = async (conversationId: string) => {
+    if (editTitle.trim() && editTitle !== conversations.find(c => c.id === conversationId)?.title) {
+      await updateConversationTitle(conversationId, editTitle.trim())
+    }
+    setEditingTitle(null)
+    setEditTitle('')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingTitle(null)
+    setEditTitle('')
   }
 
   // Check if voice chat is properly configured
@@ -359,28 +318,6 @@ export default function Dashboard() {
   const handleBackToConversations = () => {
     setActiveConversation(null)
     setMessages([])
-  }
-
-  // Show error state if Supabase is not configured
-  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Configuration Required</h2>
-          <p className="text-gray-600 mb-4">
-            Supabase environment variables are missing. Please configure your deployment settings.
-          </p>
-          <div className="bg-gray-50 rounded-lg p-4 text-left">
-            <p className="text-sm font-medium text-gray-700 mb-2">Required variables:</p>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• VITE_SUPABASE_URL</li>
-              <li>• VITE_SUPABASE_ANON_KEY</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -469,6 +406,18 @@ export default function Dashboard() {
               </p>
             </div>
           )}
+
+          {!isOpenAIConfigured && (
+            <div className="w-full bg-amber-100 border-2 border-dashed border-amber-300 px-4 py-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-amber-700 mb-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">ChatGPT Integration</span>
+              </div>
+              <p className="text-xs text-amber-600">
+                Add VITE_OPENAI_API_KEY to enable AI responses
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Conversations List */}
@@ -479,41 +428,37 @@ export default function Dashboard() {
               className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group ${
                 activeConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
               }`}
-              onClick={() => !editingTitle && setActiveConversation(conversation.id)}
+              onClick={() => setActiveConversation(conversation.id)}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0 mr-2">
+                <div className="flex-1 min-w-0">
                   {editingTitle === conversation.id ? (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="text"
-                        value={editTitleValue}
-                        onChange={(e) => setEditTitleValue(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') saveTitle()
-                          if (e.key === 'Escape') cancelEditingTitle()
-                        }}
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
                         className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveTitle(conversation.id)
+                          } else if (e.key === 'Escape') {
+                            handleCancelEdit()
+                          }
+                        }}
                         autoFocus
-                        onClick={(e) => e.stopPropagation()}
                       />
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          saveTitle()
-                        }}
+                        onClick={() => handleSaveTitle(conversation.id)}
                         className="p-1 text-green-600 hover:text-green-700"
                       >
                         <Check className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          cancelEditingTitle()
-                        }}
+                        onClick={handleCancelEdit}
                         className="p-1 text-gray-400 hover:text-gray-600"
                       >
-                        <XCircle className="h-4 w-4" />
+                        <XIcon className="h-4 w-4" />
                       </button>
                     </div>
                   ) : (
@@ -532,12 +477,12 @@ export default function Dashboard() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        startEditingTitle(conversation)
+                        handleEditTitle(conversation.id, conversation.title)
                       }}
                       className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                       title="Edit title"
                     >
-                      <Edit3 className="h-4 w-4" />
+                      <Edit2 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={(e) => {
@@ -586,7 +531,9 @@ export default function Dashboard() {
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
-                    <p className="text-sm text-gray-500 hidden sm:block">Powered by ChatGPT • Always here to support you</p>
+                    <p className="text-sm text-gray-500 hidden sm:block">
+                      {isOpenAIConfigured ? 'Powered by ChatGPT - Always here to support you' : 'Always here to support you'}
+                    </p>
                   </div>
                 </div>
                 
@@ -610,15 +557,16 @@ export default function Dashboard() {
                     <MessageCircle className="h-8 w-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
-                  <p className="text-gray-500 mb-4 px-4">Ask me anything about neonatal care, share your concerns, or just tell me how you're feeling today.</p>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                    <p className="text-sm text-blue-800 font-medium mb-2">✨ Now powered by ChatGPT</p>
-                    <p className="text-xs text-blue-700">I'm specially trained to provide compassionate support for NICU families with evidence-based information.</p>
-                  </div>
+                  <p className="text-gray-500 mb-4 px-4">
+                    {isOpenAIConfigured 
+                      ? "Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information."
+                      : "Share how you're feeling or ask questions. I'm here to provide support during your NICU journey."
+                    }
+                  </p>
                   {isVoiceChatConfigured && (
                     <button
                       onClick={() => setIsVoiceChatOpen(true)}
-                      className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
                     >
                       <Phone className="h-5 w-5" />
                       <span>Try Voice Chat</span>
@@ -656,7 +604,6 @@ export default function Dashboard() {
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <span className="text-xs text-gray-500 ml-2">ChatGPT is thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -671,7 +618,7 @@ export default function Dashboard() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Share your thoughts, ask questions, or tell me how you're feeling..."
+                  placeholder="Type your message..."
                   className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   disabled={loading}
                 />
@@ -699,11 +646,12 @@ export default function Dashboard() {
               
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
-              <p className="text-gray-500 mb-4 px-4">Choose how you'd like to connect with your AI assistant</p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800 font-medium mb-1">✨ Now powered by ChatGPT</p>
-                <p className="text-xs text-blue-700">Specially trained for NICU families with compassionate, evidence-based support</p>
-              </div>
+              <p className="text-gray-500 mb-6 px-4">
+                {isOpenAIConfigured 
+                  ? "Choose how you'd like to connect with your AI assistant. I'm powered by ChatGPT and specially trained to provide compassionate neonatal care support."
+                  : "Choose how you'd like to connect with your AI assistant"
+                }
+              </p>
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
