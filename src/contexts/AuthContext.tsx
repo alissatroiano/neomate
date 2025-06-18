@@ -95,12 +95,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getRedirectUrl = () => {
-    // Check if we're in production
-    if (window.location.hostname === 'neomate.app' || window.location.hostname.includes('netlify.app')) {
-      return 'https://neomate.app/dashboard'
+    // Check if we're in production (Netlify deployment)
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
+    
+    if (hostname.includes('netlify.app') || hostname === 'neomate.app') {
+      return `https://${hostname}/dashboard`
     }
+    
     // For development
-    return `${window.location.origin}/dashboard`
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/dashboard`
+    }
+    
+    return '/dashboard'
   }
 
   const signUp = async (email: string, password: string, fullName: string) => {
