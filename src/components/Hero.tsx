@@ -42,6 +42,25 @@ export default function Hero({ onGetStarted }: HeroProps) {
               </button>
             </div>
 
+            {/* Powered by Bolt Badge */}
+            <div className="flex justify-center sm:justify-start">
+              <a 
+                href="https://bolt.new" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors group border border-gray-200"
+              >
+                <img 
+                  src="/white_circle_360x360.png" 
+                  alt="Powered by Bolt" 
+                  className="w-6 h-6"
+                />
+                <span className="text-sm text-gray-600 group-hover:text-gray-800 font-medium">
+                  Powered by Bolt
+                </span>
+              </a>
+            </div>
+
             {/* Trust Indicators */}
             <div className="flex items-center space-x-8 pt-8">
               <div className="flex items-center space-x-2">
