@@ -16,7 +16,10 @@ import {
   AlertCircle,
   Menu,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Edit3,
+  Check,
+  XCircle
 } from 'lucide-react'
 import VoiceChat from '../voice/VoiceChat'
 
@@ -29,6 +32,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [editingTitle, setEditingTitle] = useState<string | null>(null)
+  const [editTitleValue, setEditTitleValue] = useState('')
 
   // Get ElevenLabs configuration from environment variables with fallbacks
   const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
@@ -96,6 +101,80 @@ export default function Dashboard() {
     }
   }
 
+  const generateConversationTitle = (userMessage: string): string => {
+    // Extract key topics and create a meaningful title
+    const message = userMessage.toLowerCase()
+    
+    // NICU-specific keywords
+    if (message.includes('nicu') || message.includes('intensive care')) {
+      return 'NICU Support Chat'
+    }
+    if (message.includes('premature') || message.includes('preemie') || message.includes('weeks')) {
+      return 'Premature Baby Support'
+    }
+    if (message.includes('feeding') || message.includes('bottle') || message.includes('breastfeed')) {
+      return 'Feeding Guidance'
+    }
+    if (message.includes('monitor') || message.includes('machine') || message.includes('equipment')) {
+      return 'Medical Equipment Questions'
+    }
+    if (message.includes('scared') || message.includes('worried') || message.includes('anxious')) {
+      return 'Emotional Support'
+    }
+    if (message.includes('discharge') || message.includes('home') || message.includes('going home')) {
+      return 'Discharge Planning'
+    }
+    if (message.includes('weight') || message.includes('growth')) {
+      return 'Growth & Development'
+    }
+    if (message.includes('breathing') || message.includes('oxygen') || message.includes('ventilator')) {
+      return 'Breathing Support'
+    }
+    if (message.includes('sleep') || message.includes('tired') || message.includes('exhausted')) {
+      return 'Rest & Self-Care'
+    }
+    if (message.includes('partner') || message.includes('family') || message.includes('sibling')) {
+      return 'Family Support'
+    }
+    
+    // General emotional keywords
+    if (message.includes('help') || message.includes('support')) {
+      return 'Support & Guidance'
+    }
+    if (message.includes('question') || message.includes('understand') || message.includes('explain')) {
+      return 'Questions & Information'
+    }
+    
+    // Fallback: Use first few words of the message
+    const words = userMessage.split(' ').slice(0, 4).join(' ')
+    return words.length > 30 ? words.substring(0, 30) + '...' : words || 'New Conversation'
+  }
+
+  const updateConversationTitle = async (conversationId: string, title: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ title })
+        .eq('id', conversationId)
+
+      if (error) {
+        console.error('Error updating conversation title:', error)
+        return
+      }
+
+      // Update local state
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, title }
+            : conv
+        )
+      )
+    } catch (error) {
+      console.error('Error updating conversation title:', error)
+    }
+  }
+
   const createNewConversation = async () => {
     if (!user) return
 
@@ -151,6 +230,13 @@ export default function Dashboard() {
       }
 
       setMessages(prev => [...prev, userMessageData])
+
+      // Check if this is the first message and update title if it's still "New Conversation"
+      const currentConversation = conversations.find(c => c.id === activeConversation)
+      if (currentConversation && currentConversation.title === 'New Conversation') {
+        const newTitle = generateConversationTitle(userMessage)
+        await updateConversationTitle(activeConversation, newTitle)
+      }
 
       // Simulate AI response (replace with actual AI integration)
       setTimeout(async () => {
@@ -211,6 +297,24 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error deleting conversation:', error)
     }
+  }
+
+  const startEditingTitle = (conversation: Conversation) => {
+    setEditingTitle(conversation.id)
+    setEditTitleValue(conversation.title)
+  }
+
+  const saveTitle = async () => {
+    if (!editingTitle || !editTitleValue.trim()) return
+
+    await updateConversationTitle(editingTitle, editTitleValue.trim())
+    setEditingTitle(null)
+    setEditTitleValue('')
+  }
+
+  const cancelEditingTitle = () => {
+    setEditingTitle(null)
+    setEditTitleValue('')
   }
 
   const handleVoiceConversationEnd = (summary: string) => {
@@ -347,26 +451,78 @@ export default function Dashboard() {
               className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group ${
                 activeConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
               }`}
-              onClick={() => setActiveConversation(conversation.id)}
+              onClick={() => !editingTitle && setActiveConversation(conversation.id)}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {conversation.title}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(conversation.updated_at).toLocaleDateString()}
-                  </p>
+                <div className="flex-1 min-w-0 mr-2">
+                  {editingTitle === conversation.id ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={editTitleValue}
+                        onChange={(e) => setEditTitleValue(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveTitle()
+                          if (e.key === 'Escape') cancelEditingTitle()
+                        }}
+                        className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          saveTitle()
+                        }}
+                        className="p-1 text-green-600 hover:text-green-700"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          cancelEditingTitle()
+                        }}
+                        className="p-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {conversation.title}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(conversation.updated_at).toLocaleDateString()}
+                      </p>
+                    </>
+                  )}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteConversation(conversation.id)
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {editingTitle !== conversation.id && (
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        startEditingTitle(conversation)
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                      title="Edit title"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteConversation(conversation.id)
+                      }}
+                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
