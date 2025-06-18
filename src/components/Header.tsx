@@ -26,30 +26,12 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
             <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</a>
             <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">Stories</a>
             <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
-            <div className="flex flex-col items-end space-y-2">
-              <button 
-                onClick={onGetStarted}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Get Started
-              </button>
-              {/* Powered by Bolt Badge */}
-              <a 
-                href="https://bolt.new" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center space-x-1 bg-gray-50 hover:bg-gray-100 px-3 py-1 rounded-md transition-colors group border border-gray-200"
-              >
-                <img 
-                  src="/white_circle_360x360.png" 
-                  alt="Powered by Bolt" 
-                  className="w-4 h-4"
-                />
-                <span className="text-xs text-gray-600 group-hover:text-gray-800 font-medium">
-                  Powered by Bolt
-                </span>
-              </a>
-            </div>
+            <button 
+              onClick={onGetStarted}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Get Started
+            </button>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -79,25 +61,25 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
               >
                 Get Started
               </button>
-              {/* Powered by Bolt Badge - Mobile */}
-              <a 
-                href="https://bolt.new" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center justify-center space-x-2 bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors group border border-gray-200"
-              >
-                <img 
-                  src="/white_circle_360x360.png" 
-                  alt="Powered by Bolt" 
-                  className="w-4 h-4"
-                />
-                <span className="text-sm text-gray-600 group-hover:text-gray-800 font-medium">
-                  Powered by Bolt
-                </span>
-              </a>
             </nav>
           </div>
         )}
+
+        {/* Bolt Logo Row - Under Navigation */}
+        <div className="flex justify-end py-2 border-t border-gray-100">
+          <a 
+            href="https://bolt.new" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src="/white_circle_360x360.png" 
+              alt="Powered by Bolt" 
+              className="w-8 h-8"
+            />
+          </a>
+        </div>
       </div>
     </header>
   );
