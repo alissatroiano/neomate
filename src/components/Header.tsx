@@ -34,6 +34,22 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
             </button>
           </nav>
 
+          {/* Bolt Logo - Desktop/Tablet (right side) */}
+          <div className="hidden md:block">
+            <a 
+              href="https://bolt.new" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src="/white_circle_360x360.png" 
+                alt="Powered by Bolt" 
+                className="w-12 h-12"
+              />
+            </a>
+          </div>
+
           {/* Mobile Menu Button */}
           <button
             className="md:hidden p-2"
@@ -61,25 +77,25 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
               >
                 Get Started
               </button>
+              
+              {/* Bolt Logo - Mobile (centered) */}
+              <div className="flex justify-center pt-4">
+                <a 
+                  href="https://bolt.new" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <img 
+                    src="/white_circle_360x360.png" 
+                    alt="Powered by Bolt" 
+                    className="w-12 h-12"
+                  />
+                </a>
+              </div>
             </nav>
           </div>
         )}
-
-        {/* Bolt Logo Row - Under Navigation */}
-        <div className="flex justify-end py-2 border-t border-gray-100">
-          <a 
-            href="https://bolt.new" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:opacity-80 transition-opacity"
-          >
-            <img 
-              src="/white_circle_360x360.png" 
-              alt="Powered by Bolt" 
-              className="w-8 h-8"
-            />
-          </a>
-        </div>
       </div>
     </header>
   );
