@@ -3,11 +3,22 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+// Provide fallback values for development/build time
+const defaultUrl = 'https://placeholder.supabase.co'
+const defaultKey = 'placeholder-key'
+
+if (!supabaseUrl && import.meta.env.MODE === 'production') {
+  console.error('Missing VITE_SUPABASE_URL environment variable')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseAnonKey && import.meta.env.MODE === 'production') {
+  console.error('Missing VITE_SUPABASE_ANON_KEY environment variable')
+}
+
+export const supabase = createClient(
+  supabaseUrl || defaultUrl, 
+  supabaseAnonKey || defaultKey
+)
 
 // Database types
 export interface Profile {
