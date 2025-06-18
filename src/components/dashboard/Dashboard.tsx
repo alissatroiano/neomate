@@ -203,6 +203,46 @@ export default function Dashboard() {
     }
   }
 
+  const callChatGPT = async (userMessage: string, conversationHistory: Message[]) => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/chat-completion`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userMessage,
+            messages: conversationHistory
+          })
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('ChatGPT API error:', errorData)
+        
+        // Return fallback response if available
+        if (errorData.fallback) {
+          return errorData.fallback
+        }
+        
+        throw new Error('Failed to get AI response')
+      }
+
+      const data = await response.json()
+      return data.response
+    } catch (error) {
+      console.error('Error calling ChatGPT:', error)
+      
+      // Fallback response for any errors
+      return "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
+    }
+  }
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeConversation || !user) return
 
@@ -226,6 +266,7 @@ export default function Dashboard() {
 
       if (userError) {
         console.error('Error sending message:', userError)
+        setLoading(false)
         return
       }
 
@@ -238,43 +279,30 @@ export default function Dashboard() {
         await updateConversationTitle(activeConversation, newTitle)
       }
 
-      // Simulate AI response (replace with actual AI integration)
-      setTimeout(async () => {
-        const aiResponse = generateAIResponse(userMessage)
-        
-        const { data: aiMessageData, error: aiError } = await supabase
-          .from('messages')
-          .insert([
-            {
-              conversation_id: activeConversation,
-              content: aiResponse,
-              role: 'assistant',
-            },
-          ])
-          .select()
-          .single()
+      // Get AI response from ChatGPT
+      const aiResponse = await callChatGPT(userMessage, messages)
+      
+      const { data: aiMessageData, error: aiError } = await supabase
+        .from('messages')
+        .insert([
+          {
+            conversation_id: activeConversation,
+            content: aiResponse,
+            role: 'assistant',
+          },
+        ])
+        .select()
+        .single()
 
-        if (!aiError) {
-          setMessages(prev => [...prev, aiMessageData])
-        }
-        
-        setLoading(false)
-      }, 1000)
+      if (!aiError) {
+        setMessages(prev => [...prev, aiMessageData])
+      }
+      
+      setLoading(false)
     } catch (error) {
       console.error('Error sending message:', error)
       setLoading(false)
     }
-  }
-
-  const generateAIResponse = (userMessage: string): string => {
-    const responses = [
-      "I understand this is a challenging time for you and your family. Your feelings are completely valid, and I'm here to support you through this journey.",
-      "Thank you for sharing that with me. In the NICU, it's normal to feel overwhelmed. Would you like me to explain what some of the monitors and equipment do?",
-      "Your baby is receiving excellent care from the medical team. It's important to take care of yourself too during this time. Have you been able to rest?",
-      "Many parents in the NICU experience similar concerns. You're not alone in feeling this way. Would you like some strategies for managing stress and anxiety?",
-      "That's a great question about your baby's care. The medical team is monitoring everything closely. Is there something specific you'd like me to help explain?"
-    ]
-    return responses[Math.floor(Math.random() * responses.length)]
   }
 
   const deleteConversation = async (conversationId: string) => {
@@ -558,7 +586,7 @@ export default function Dashboard() {
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
-                    <p className="text-sm text-gray-500 hidden sm:block">Always here to support you</p>
+                    <p className="text-sm text-gray-500 hidden sm:block">Powered by ChatGPT • Always here to support you</p>
                   </div>
                 </div>
                 
@@ -582,11 +610,15 @@ export default function Dashboard() {
                     <MessageCircle className="h-8 w-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
-                  <p className="text-gray-500 mb-4 px-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
+                  <p className="text-gray-500 mb-4 px-4">Ask me anything about neonatal care, share your concerns, or just tell me how you're feeling today.</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                    <p className="text-sm text-blue-800 font-medium mb-2">✨ Now powered by ChatGPT</p>
+                    <p className="text-xs text-blue-700">I'm specially trained to provide compassionate support for NICU families with evidence-based information.</p>
+                  </div>
                   {isVoiceChatConfigured && (
                     <button
                       onClick={() => setIsVoiceChatOpen(true)}
-                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
+                      className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
                     >
                       <Phone className="h-5 w-5" />
                       <span>Try Voice Chat</span>
@@ -607,7 +639,7 @@ export default function Dashboard() {
                         : 'bg-white border border-gray-200 text-gray-900'
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     <p className={`text-xs mt-1 ${
                       message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                     }`}>
@@ -624,6 +656,7 @@ export default function Dashboard() {
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <span className="text-xs text-gray-500 ml-2">ChatGPT is thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -638,7 +671,7 @@ export default function Dashboard() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Type your message..."
+                  placeholder="Share your thoughts, ask questions, or tell me how you're feeling..."
                   className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   disabled={loading}
                 />
@@ -666,7 +699,11 @@ export default function Dashboard() {
               
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
-              <p className="text-gray-500 mb-6 px-4">Choose how you'd like to connect with your AI assistant</p>
+              <p className="text-gray-500 mb-4 px-4">Choose how you'd like to connect with your AI assistant</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-blue-800 font-medium mb-1">✨ Now powered by ChatGPT</p>
+                <p className="text-xs text-blue-700">Specially trained for NICU families with compassionate, evidence-based support</p>
+              </div>
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
