@@ -50,17 +50,34 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
             </a>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700" />
-            ) : (
-              <Menu className="h-6 w-6 text-gray-700" />
-            )}
-          </button>
+          {/* Mobile: Bolt Logo and Menu Button */}
+          <div className="md:hidden flex items-center space-x-3">
+            {/* Bolt Logo - Mobile (top right) */}
+            <a 
+              href="https://bolt.new" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src="/white_circle_360x360.png" 
+                alt="Powered by Bolt" 
+                className="w-10 h-10"
+              />
+            </a>
+            
+            {/* Mobile Menu Button */}
+            <button
+              className="p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 text-gray-700" />
+              ) : (
+                <Menu className="h-6 w-6 text-gray-700" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -77,22 +94,6 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
               >
                 Get Started
               </button>
-              
-              {/* Bolt Logo - Mobile (centered) */}
-              <div className="flex justify-center pt-4">
-                <a 
-                  href="https://bolt.new" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:opacity-80 transition-opacity"
-                >
-                  <img 
-                    src="/white_circle_360x360.png" 
-                    alt="Powered by Bolt" 
-                    className="w-12 h-12"
-                  />
-                </a>
-              </div>
             </nav>
           </div>
         )}
