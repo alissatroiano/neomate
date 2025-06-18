@@ -13,7 +13,10 @@ import {
   Trash2,
   Mic,
   Phone,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  X,
+  ArrowLeft
 } from 'lucide-react'
 import VoiceChat from '../voice/VoiceChat'
 
@@ -25,6 +28,7 @@ export default function Dashboard() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Get ElevenLabs configuration from environment variables
   const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
@@ -47,6 +51,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (activeConversation) {
       fetchMessages(activeConversation)
+      // Close sidebar on mobile when conversation is selected
+      setIsSidebarOpen(false)
     }
   }, [activeConversation])
 
@@ -218,10 +224,28 @@ export default function Dashboard() {
   // Check if voice chat is properly configured
   const isVoiceChatConfigured = ELEVENLABS_API_KEY && ELEVENLABS_AGENT_ID
 
+  const handleBackToConversations = () => {
+    setActiveConversation(null)
+    setMessages([])
+  }
+
   return (
-    <div className="h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex relative">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`
+        fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
+        w-80 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -231,13 +255,22 @@ export default function Dashboard() {
               </div>
               <span className="text-xl font-bold text-gray-900">Neomate</span>
             </div>
-            <button
-              onClick={signOut}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={signOut}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
           
           <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -319,29 +352,45 @@ export default function Dashboard() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {activeConversation ? (
           <>
             {/* Chat Header */}
             <div className="bg-white border-b border-gray-200 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
+                  {/* Mobile back button */}
+                  <button
+                    onClick={handleBackToConversations}
+                    className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  
+                  {/* Mobile menu button */}
+                  <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="lg:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  
                   <div className="bg-green-600 p-2 rounded-full">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Neomate AI Assistant</h2>
-                    <p className="text-sm text-gray-500">Always here to support you</p>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
+                    <p className="text-sm text-gray-500 hidden sm:block">Always here to support you</p>
                   </div>
                 </div>
                 
                 {isVoiceChatConfigured && (
                   <button
                     onClick={() => setIsVoiceChatOpen(true)}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                    className="bg-green-600 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                   >
                     <Mic className="h-4 w-4" />
-                    <span>Voice Chat</span>
+                    <span className="hidden sm:inline">Voice Chat</span>
                   </button>
                 )}
               </div>
@@ -350,12 +399,12 @@ export default function Dashboard() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                     <MessageCircle className="h-8 w-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
-                  <p className="text-gray-500 mb-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
+                  <p className="text-gray-500 mb-4 px-4">Ask me anything about neonatal care, or just share how you're feeling.</p>
                   {isVoiceChatConfigured && (
                     <button
                       onClick={() => setIsVoiceChatOpen(true)}
@@ -374,7 +423,7 @@ export default function Dashboard() {
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                    className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
                       message.role === 'user'
                         ? 'bg-blue-600 text-white'
                         : 'bg-white border border-gray-200 text-gray-900'
@@ -412,13 +461,13 @@ export default function Dashboard() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                   disabled={loading}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || loading}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   <Send className="h-5 w-5" />
                 </button>
@@ -426,11 +475,20 @@ export default function Dashboard() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center max-w-md">
+              {/* Mobile menu button when no conversation selected */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden mb-6 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto"
+              >
+                <Menu className="h-5 w-5" />
+                <span>Open Menu</span>
+              </button>
+              
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
-              <p className="text-gray-500 mb-6">Choose how you'd like to connect with your AI assistant</p>
+              <p className="text-gray-500 mb-6 px-4">Choose how you'd like to connect with your AI assistant</p>
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
