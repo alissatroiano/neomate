@@ -182,55 +182,39 @@ export default function Dashboard() {
       }
 
       // Generate AI response
-      if (isOpenAIConfigured) {
-        try {
-          // Get conversation history for context
-          const conversationHistory = [...messages, userMessageData].map(msg => ({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content
-          }))
+      try {
+        console.log('Generating AI response for message:', userMessage)
+        
+        // Get conversation history for context
+        const conversationHistory = [...messages, userMessageData].map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }))
 
-          const aiResponse = await generateChatResponse(conversationHistory)
-          
-          const { data: aiMessageData, error: aiError } = await supabase
-            .from('messages')
-            .insert([
-              {
-                conversation_id: activeConversation,
-                content: aiResponse,
-                role: 'assistant',
-              },
-            ])
-            .select()
-            .single()
+        const aiResponse = await generateChatResponse(conversationHistory)
+        console.log('AI response received:', aiResponse.substring(0, 100) + '...')
+        
+        const { data: aiMessageData, error: aiError } = await supabase
+          .from('messages')
+          .insert([
+            {
+              conversation_id: activeConversation,
+              content: aiResponse,
+              role: 'assistant',
+            },
+          ])
+          .select()
+          .single()
 
-          if (!aiError) {
-            setMessages(prev => [...prev, aiMessageData])
-          }
-        } catch (error) {
-          console.error('Error generating AI response:', error)
-          // Add fallback response
-          const fallbackResponse = "I'm experiencing some technical difficulties right now, but I want you to know that your concerns are valid and important. Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have."
-          
-          const { data: fallbackMessageData } = await supabase
-            .from('messages')
-            .insert([
-              {
-                conversation_id: activeConversation,
-                content: fallbackResponse,
-                role: 'assistant',
-              },
-            ])
-            .select()
-            .single()
-
-          if (fallbackMessageData) {
-            setMessages(prev => [...prev, fallbackMessageData])
-          }
+        if (!aiError) {
+          setMessages(prev => [...prev, aiMessageData])
+        } else {
+          console.error('Error saving AI message:', aiError)
         }
-      } else {
-        // Fallback response when OpenAI is not configured
-        const fallbackResponse = "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
+      } catch (error) {
+        console.error('Error generating AI response:', error)
+        // Add fallback response
+        const fallbackResponse = "I'm experiencing some technical difficulties right now, but I want you to know that your concerns are valid and important. Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have."
         
         const { data: fallbackMessageData } = await supabase
           .from('messages')

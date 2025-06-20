@@ -9,6 +9,9 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
     
+    console.log('Supabase URL:', supabaseUrl ? 'configured' : 'missing')
+    console.log('Supabase Anon Key:', supabaseAnonKey ? 'configured' : 'missing')
+    
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Supabase configuration missing')
     }
@@ -18,6 +21,8 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     if (!userMessage) {
       throw new Error('No user message found')
     }
+
+    console.log('Calling edge function with user message:', userMessage.substring(0, 50) + '...')
 
     // Call our Supabase edge function
     const response = await fetch(`${supabaseUrl}/functions/v1/chat-completion`, {
@@ -32,19 +37,29 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
       })
     })
 
+    console.log('Edge function response status:', response.status)
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('Edge function error:', response.status, errorData)
+      const errorText = await response.text()
+      console.error('Edge function error response:', errorText)
       
-      // Return fallback from edge function if available
-      if (errorData.fallback) {
-        return errorData.fallback
+      try {
+        const errorData = JSON.parse(errorText)
+        console.error('Edge function error data:', errorData)
+        
+        // Return fallback from edge function if available
+        if (errorData.fallback) {
+          return errorData.fallback
+        }
+      } catch (parseError) {
+        console.error('Could not parse error response as JSON')
       }
       
       throw new Error(`API call failed: ${response.status}`)
     }
 
     const data = await response.json()
+    console.log('Edge function response data:', data)
     
     if (data.response) {
       return data.response

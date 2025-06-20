@@ -50,6 +50,8 @@ Guidelines:
 Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey.`
 
 serve(async (req: Request) => {
+  console.log('Chat completion function called:', req.method)
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -59,6 +61,8 @@ serve(async (req: Request) => {
   }
 
   try {
+    console.log('OpenAI API Key configured:', !!OPENAI_API_KEY)
+    
     if (!OPENAI_API_KEY) {
       console.error('OpenAI API key not configured')
       return new Response(
@@ -89,7 +93,10 @@ serve(async (req: Request) => {
       )
     }
 
-    const { messages, userMessage } = await req.json()
+    const requestBody = await req.json()
+    console.log('Request body received:', JSON.stringify(requestBody, null, 2))
+    
+    const { messages, userMessage } = requestBody
 
     if (!userMessage) {
       return new Response(
@@ -146,6 +153,8 @@ serve(async (req: Request) => {
       }),
     })
 
+    console.log('OpenAI API response status:', response.status)
+
     if (!response.ok) {
       console.error('OpenAI API error:', response.status, response.statusText)
       const errorText = await response.text()
@@ -167,6 +176,8 @@ serve(async (req: Request) => {
     }
 
     const data = await response.json()
+    console.log('OpenAI API response data:', JSON.stringify(data, null, 2))
+    
     const aiResponse = data.choices?.[0]?.message?.content
 
     if (!aiResponse) {
