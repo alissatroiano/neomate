@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -18,14 +18,8 @@ export default defineConfig({
           router: ['react-router-dom'],
           supabase: ['@supabase/supabase-js'],
           icons: ['lucide-react'],
-          elevenlabs: ['@elevenlabs/react']
+          openai: ['openai']
         }
-      }
-    },
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
       }
     }
   },
