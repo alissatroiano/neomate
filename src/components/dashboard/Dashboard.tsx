@@ -9,11 +9,8 @@ import {
   User, 
   Bot, 
   LogOut, 
-  Settings,
   Heart,
   Trash2,
-  Mic,
-  Phone,
   AlertCircle,
   Menu,
   X,
@@ -22,7 +19,6 @@ import {
   Check,
   XIcon
 } from 'lucide-react'
-import VoiceChat from '../voice/VoiceChat'
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth()
@@ -31,14 +27,9 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
-
-  // Get ElevenLabs configuration from environment variables
-  const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || ''
-  const ELEVENLABS_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID || ''
 
   // Check if OpenAI is configured
   const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
@@ -287,13 +278,6 @@ export default function Dashboard() {
     }
   }
 
-  const handleVoiceConversationEnd = (summary: string) => {
-    // Optionally save the voice conversation summary to the current text conversation
-    if (activeConversation && summary) {
-      console.log('Voice conversation ended with summary:', summary)
-    }
-  }
-
   const handleEditTitle = (conversationId: string, currentTitle: string) => {
     setEditingTitle(conversationId)
     setEditTitle(currentTitle)
@@ -311,9 +295,6 @@ export default function Dashboard() {
     setEditingTitle(null)
     setEditTitle('')
   }
-
-  // Check if voice chat is properly configured
-  const isVoiceChatConfigured = ELEVENLABS_API_KEY && ELEVENLABS_AGENT_ID
 
   const handleBackToConversations = () => {
     setActiveConversation(null)
@@ -384,28 +365,8 @@ export default function Dashboard() {
             className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
           >
             <Plus className="h-5 w-5" />
-            <span>New Text Chat</span>
+            <span>New Chat</span>
           </button>
-          
-          {isVoiceChatConfigured ? (
-            <button
-              onClick={() => setIsVoiceChatOpen(true)}
-              className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-            >
-              <Phone className="h-5 w-5" />
-              <span>Start Voice Chat</span>
-            </button>
-          ) : (
-            <div className="w-full bg-gray-100 border-2 border-dashed border-gray-300 px-4 py-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-gray-500 mb-2">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">Voice Chat Setup Required</span>
-              </div>
-              <p className="text-xs text-gray-600">
-                Add VITE_ELEVENLABS_AGENT_ID to your .env file to enable voice chat
-              </p>
-            </div>
-          )}
 
           {!isOpenAIConfigured && (
             <div className="w-full bg-amber-100 border-2 border-dashed border-amber-300 px-4 py-3 rounded-lg">
@@ -536,16 +497,6 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                
-                {isVoiceChatConfigured && (
-                  <button
-                    onClick={() => setIsVoiceChatOpen(true)}
-                    className="bg-green-600 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Mic className="h-4 w-4" />
-                    <span className="hidden sm:inline">Voice Chat</span>
-                  </button>
-                )}
               </div>
             </div>
 
@@ -563,15 +514,6 @@ export default function Dashboard() {
                       : "Share how you're feeling or ask questions. I'm here to provide support during your NICU journey."
                     }
                   </p>
-                  {isVoiceChatConfigured && (
-                    <button
-                      onClick={() => setIsVoiceChatOpen(true)}
-                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center space-x-2"
-                    >
-                      <Phone className="h-5 w-5" />
-                      <span>Try Voice Chat</span>
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -648,8 +590,8 @@ export default function Dashboard() {
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
               <p className="text-gray-500 mb-6 px-4">
                 {isOpenAIConfigured 
-                  ? "Choose how you'd like to connect with your AI assistant. I'm powered by ChatGPT and specially trained to provide compassionate neonatal care support."
-                  : "Choose how you'd like to connect with your AI assistant"
+                  ? "Start a conversation with your AI assistant. I'm powered by ChatGPT and specially trained to provide compassionate neonatal care support."
+                  : "Start a conversation with your AI assistant"
                 }
               </p>
               <div className="space-y-3">
@@ -657,42 +599,13 @@ export default function Dashboard() {
                   onClick={createNewConversation}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors block w-full"
                 >
-                  Start Text Chat
+                  Start New Chat
                 </button>
-                {isVoiceChatConfigured ? (
-                  <button
-                    onClick={() => setIsVoiceChatOpen(true)}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full"
-                  >
-                    <Phone className="h-5 w-5" />
-                    <span>Start Voice Chat</span>
-                  </button>
-                ) : (
-                  <div className="bg-gray-100 border-2 border-dashed border-gray-300 px-6 py-3 rounded-lg">
-                    <div className="flex items-center justify-center space-x-2 text-gray-500 mb-1">
-                      <AlertCircle className="h-4 w-4" />
-                      <span className="text-sm font-medium">Voice Chat Setup Required</span>
-                    </div>
-                    <p className="text-xs text-gray-600">
-                      Add VITE_ELEVENLABS_AGENT_ID to enable voice features
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Voice Chat Modal */}
-      {isVoiceChatConfigured && (
-        <VoiceChat
-          isOpen={isVoiceChatOpen}
-          onClose={() => setIsVoiceChatOpen(false)}
-          agentId={ELEVENLABS_AGENT_ID}
-          onConversationEnd={handleVoiceConversationEnd}
-        />
-      )}
     </div>
   )
 }
