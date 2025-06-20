@@ -60,8 +60,12 @@ serve(async (req: Request) => {
 
   try {
     if (!OPENAI_API_KEY) {
+      console.error('OpenAI API key not configured')
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        JSON.stringify({ 
+          error: 'OpenAI API key not configured',
+          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting to my AI service right now, please know that your feelings are valid and you're not alone in this journey. Please don't hesitate to speak with your medical team or a counselor if you need immediate support."
+        }),
         {
           status: 500,
           headers: {
@@ -123,6 +127,8 @@ serve(async (req: Request) => {
       content: userMessage
     })
 
+    console.log('Making OpenAI API request with', conversationMessages.length, 'messages')
+
     // Make request to OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -131,7 +137,7 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Using the more cost-effective model
+        model: "gpt-4o-mini",
         messages: conversationMessages,
         max_tokens: 500,
         temperature: 0.7,
@@ -148,7 +154,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to get response from AI service',
-          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. Is there something specific I can help you with?"
+          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
         }),
         {
           status: response.status,
@@ -164,6 +170,7 @@ serve(async (req: Request) => {
     const aiResponse = data.choices?.[0]?.message?.content
 
     if (!aiResponse) {
+      console.error('No response generated from OpenAI')
       return new Response(
         JSON.stringify({ 
           error: 'No response generated',
@@ -179,6 +186,7 @@ serve(async (req: Request) => {
       )
     }
 
+    console.log('Successfully generated AI response')
     return new Response(
       JSON.stringify({ response: aiResponse }),
       {

@@ -1,75 +1,59 @@
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-})
-
+// OpenAI integration via Supabase Edge Function
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
 }
 
-const NEOMATE_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specifically designed to support families navigating neonatal care and NICU hospitalization. You are:
-
-CORE IDENTITY:
-- A therapeutic AI companion trained by healthcare professionals
-- Empathetic, warm, and understanding
-- Knowledgeable about neonatal care, NICU procedures, and family support
-- Always prioritizing emotional support alongside medical information
-
-COMMUNICATION STYLE:
-- Speak with genuine empathy and warmth
-- Acknowledge the emotional weight of NICU experiences
-- Use clear, accessible language (avoid excessive medical jargon)
-- Validate feelings and normalize the NICU journey challenges
-- Offer hope while being realistic
-
-MEDICAL GUIDANCE:
-- Provide evidence-based information about neonatal care
-- Explain NICU procedures, equipment, and terminology
-- Discuss common NICU experiences and timelines
-- Always emphasize that you complement, never replace, medical professionals
-- Encourage communication with the medical team for specific medical decisions
-
-EMOTIONAL SUPPORT:
-- Recognize and validate the unique stresses of NICU parents
-- Offer coping strategies for anxiety, fear, and uncertainty
-- Provide reassurance about normal NICU experiences
-- Support the entire family unit (parents, siblings, extended family)
-- Acknowledge the strength it takes to navigate this journey
-
-SAFETY & BOUNDARIES:
-- Always recommend immediate medical attention for urgent concerns
-- Clearly state when situations require immediate professional intervention
-- Never provide specific medical diagnoses or treatment recommendations
-- Encourage open communication with healthcare providers
-- Maintain appropriate boundaries while being supportive
-
-RESPONSE APPROACH:
-1. Acknowledge the emotional aspect of their situation first
-2. Provide relevant, evidence-based information
-3. Offer emotional support and validation
-4. Suggest next steps or coping strategies
-5. Remind them of available support resources
-
-Remember: Every family's NICU journey is unique. Your role is to provide comfort, information, and support during one of the most challenging times in their lives.`
-
 export async function generateChatResponse(messages: ChatMessage[]): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        { role: 'system', content: NEOMATE_SYSTEM_PROMPT },
-        ...messages
-      ],
-      temperature: 0.7,
-      max_tokens: 800,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase configuration missing')
+    }
+
+    // Get the last user message
+    const userMessage = messages[messages.length - 1]?.content
+    if (!userMessage) {
+      throw new Error('No user message found')
+    }
+
+    // Call our Supabase edge function
+    const response = await fetch(`${supabaseUrl}/functions/v1/chat-completion`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages.slice(0, -1), // Previous conversation history
+        userMessage: userMessage
+      })
     })
 
-    return response.choices[0]?.message?.content || 'I apologize, but I\'m having trouble responding right now. Please know that I\'m here to support you, and I encourage you to reach out to your medical team if you have urgent concerns.'
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error('Edge function error:', response.status, errorData)
+      
+      // Return fallback from edge function if available
+      if (errorData.fallback) {
+        return errorData.fallback
+      }
+      
+      throw new Error(`API call failed: ${response.status}`)
+    }
+
+    const data = await response.json()
+    
+    if (data.response) {
+      return data.response
+    } else if (data.fallback) {
+      return data.fallback
+    } else {
+      throw new Error('No response received from AI')
+    }
+    
   } catch (error) {
     console.error('Error generating chat response:', error)
     
@@ -80,24 +64,36 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
 
 export async function generateConversationTitle(firstMessage: string): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return 'NICU Support Chat'
+    }
+
+    // Call our edge function for title generation
+    const response = await fetch(`${supabaseUrl}/functions/v1/chat-completion`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [{
           role: 'system',
-          content: 'Generate a short, empathetic title (3-6 words) for a NICU support conversation based on the first message. Focus on the main topic or concern. Examples: "Breathing Concerns", "First NICU Day", "Feeding Questions", "Going Home Soon"'
-        },
-        {
-          role: 'user',
-          content: firstMessage
-        }
-      ],
-      temperature: 0.5,
-      max_tokens: 20
+          content: 'Generate a short, empathetic title (3-6 words) for a NICU support conversation based on the user message. Focus on the main topic or concern. Examples: "Breathing Concerns", "First NICU Day", "Feeding Questions", "Going Home Soon"'
+        }],
+        userMessage: firstMessage
+      })
     })
 
-    const title = response.choices[0]?.message?.content?.trim()
-    return title || 'NICU Support Chat'
+    if (response.ok) {
+      const data = await response.json()
+      const title = data.response?.trim()
+      return title || 'NICU Support Chat'
+    }
+    
+    return 'NICU Support Chat'
   } catch (error) {
     console.error('Error generating conversation title:', error)
     return 'NICU Support Chat'
