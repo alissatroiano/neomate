@@ -39,32 +39,29 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
 
     console.log('Edge function response status:', response.status)
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Edge function error response:', errorText)
-      
-      try {
-        const errorData = JSON.parse(errorText)
-        console.error('Edge function error data:', errorData)
-        
-        // Return fallback from edge function if available
-        if (errorData.fallback) {
-          return errorData.fallback
-        }
-      } catch (parseError) {
-        console.error('Could not parse error response as JSON')
-      }
-      
-      throw new Error(`API call failed: ${response.status}`)
+    // Always try to parse the response, even for non-200 status codes
+    let data
+    try {
+      const responseText = await response.text()
+      console.log('Edge function raw response:', responseText)
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('Could not parse response as JSON:', parseError)
+      throw new Error('Invalid response from server')
     }
 
-    const data = await response.json()
     console.log('Edge function response data:', data)
     
+    // Check for response or fallback in the data
     if (data.response) {
+      console.log('Using AI response')
       return data.response
     } else if (data.fallback) {
+      console.log('Using fallback response')
       return data.fallback
+    } else if (data.error) {
+      console.log('Server returned error:', data.error)
+      throw new Error(data.error)
     } else {
       throw new Error('No response received from AI')
     }
@@ -104,7 +101,7 @@ export async function generateConversationTitle(firstMessage: string): Promise<s
 
     if (response.ok) {
       const data = await response.json()
-      const title = data.response?.trim()
+      const title = data.response?.trim() || data.fallback?.trim()
       return title || 'NICU Support Chat'
     }
     

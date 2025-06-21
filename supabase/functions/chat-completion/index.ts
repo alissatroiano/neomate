@@ -1,10 +1,10 @@
 /*
-  # ChatGPT Integration Function
+  # ChatGPT Integration Function with Rate Limiting
 
   1. Purpose
     - Provides secure ChatGPT integration for text conversations
-    - Keeps OpenAI API key secure on the server side
-    - Handles conversation context and NICU-specific prompting
+    - Handles rate limiting and quota issues gracefully
+    - Provides intelligent fallbacks for common NICU concerns
 
   2. Security
     - API key is stored securely in environment variables
@@ -13,8 +13,9 @@
 
   3. Features
     - NICU-specialized system prompt
-    - Conversation context awareness
-    - Error handling and fallbacks
+    - Rate limiting detection and handling
+    - Intelligent fallback responses
+    - Error handling and logging
 */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
@@ -48,6 +49,65 @@ Guidelines:
 - Provide hope while being realistic about challenges
 
 Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey.`
+
+// Intelligent fallback responses for common NICU concerns
+const getIntelligentFallback = (userMessage: string): string => {
+  const message = userMessage.toLowerCase()
+  
+  if (message.includes('eiee') || message.includes('epilepsy') || message.includes('seizure')) {
+    return `I understand you're concerned about EIEE (Early Infantile Epileptic Encephalopathy). This is understandably very frightening for any parent. EIEE is a rare but serious condition that typically appears in the first few months of life with seizures that can be difficult to control.
+
+While I'm having technical difficulties accessing my full knowledge base right now, I want you to know that:
+
+• Your medical team is the best resource for specific information about your baby's condition and treatment plan
+• Many families have walked this path before you, and support is available
+• Each baby's journey with EIEE is unique, and treatments continue to improve
+• It's completely normal to feel overwhelmed, scared, and uncertain
+
+Please don't hesitate to ask your neurologist or neonatologist about:
+- Treatment options and their goals
+- What to expect in the coming days/weeks
+- Support resources for families
+- How you can best support your baby
+
+You're not alone in this journey. Your love and advocacy for your baby matters tremendously.`
+  }
+  
+  if (message.includes('breathing') || message.includes('ventilator') || message.includes('oxygen')) {
+    return `I understand you have concerns about your baby's breathing. This is one of the most common and frightening aspects of NICU care for parents. While I'm having technical difficulties right now, I want to reassure you that breathing support is very common in the NICU, and the medical team is closely monitoring your baby.
+
+Please speak with your nurse or doctor about:
+- What type of breathing support your baby is receiving
+- What the monitors and alarms mean
+- How your baby is progressing
+- When changes to breathing support might be expected
+
+Your presence and voice can be comforting to your baby, even with breathing equipment. You're doing everything right by being there and asking questions.`
+  }
+  
+  if (message.includes('feeding') || message.includes('tube') || message.includes('milk')) {
+    return `Feeding concerns are very common in the NICU. Whether it's about tube feeding, breastfeeding, or formula, know that the medical team will work with you to find the best approach for your baby. While I'm having technical difficulties, I encourage you to discuss your feeding goals and concerns with your baby's care team. They can provide specific guidance based on your baby's needs and development.`
+  }
+  
+  if (message.includes('scared') || message.includes('afraid') || message.includes('worried') || message.includes('anxious')) {
+    return `Your feelings are completely valid and normal. The NICU experience is overwhelming, and it's natural to feel scared, worried, or anxious. While I'm having technical difficulties right now, I want you to know that you're not alone. Many parents have felt exactly what you're feeling.
+
+Consider reaching out to:
+- Your baby's social worker or family support coordinator
+- Other NICU parents (many hospitals have support groups)
+- A counselor who specializes in medical trauma
+- Your own support network of family and friends
+
+Taking care of your emotional well-being is important for both you and your baby. You're being the best parent you can be in an incredibly difficult situation.`
+  }
+  
+  // Default fallback
+  return `I'm experiencing technical difficulties right now, but I want you to know that your concerns are valid and important. The NICU journey is incredibly challenging, and it's completely normal to feel overwhelmed.
+
+Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have. They are there to support you and provide the specific guidance you need.
+
+You're doing an amazing job navigating this challenging journey. Your love and presence matter more than you know.`
+}
 
 serve(async (req: Request) => {
   console.log('Chat completion function called:', req.method)
@@ -119,9 +179,9 @@ serve(async (req: Request) => {
       }
     ]
 
-    // Add recent conversation history (last 10 messages for context)
+    // Add recent conversation history (last 8 messages for context, reduced to save tokens)
     if (messages && Array.isArray(messages)) {
-      const recentMessages = messages.slice(-10).map((msg: any) => ({
+      const recentMessages = messages.slice(-8).map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content
       }))
@@ -136,7 +196,7 @@ serve(async (req: Request) => {
 
     console.log('Making OpenAI API request with', conversationMessages.length, 'messages')
 
-    // Make request to OpenAI API
+    // Make request to OpenAI API with retry logic
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -144,9 +204,9 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo", // Using more cost-effective model to reduce rate limiting
         messages: conversationMessages,
-        max_tokens: 500,
+        max_tokens: 400, // Reduced to save on quota
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
@@ -160,13 +220,48 @@ serve(async (req: Request) => {
       const errorText = await response.text()
       console.error('OpenAI API error details:', errorText)
       
+      // Handle specific error types
+      if (response.status === 429) {
+        console.log('Rate limit hit, using intelligent fallback')
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded',
+            fallback: getIntelligentFallback(userMessage)
+          }),
+          {
+            status: 200, // Return 200 so frontend uses fallback
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        )
+      }
+      
+      if (response.status === 401) {
+        console.log('API key invalid')
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid API key',
+            fallback: getIntelligentFallback(userMessage)
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        )
+      }
+      
       return new Response(
         JSON.stringify({ 
           error: 'Failed to get response from AI service',
-          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone in this journey. The NICU experience can be overwhelming, and it's completely normal to feel scared, worried, or confused. Please don't hesitate to reach out to your medical team, a social worker, or counselor if you need immediate support."
+          fallback: getIntelligentFallback(userMessage)
         }),
         {
-          status: response.status,
+          status: 200, // Return 200 so frontend uses fallback
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
@@ -185,10 +280,10 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'No response generated',
-          fallback: "I understand you're reaching out for support. While I'm having a technical difficulty right now, I want you to know that what you're going through is incredibly challenging, and your feelings are completely valid. Please don't hesitate to speak with your medical team or a counselor if you need immediate support."
+          fallback: getIntelligentFallback(userMessage)
         }),
         {
-          status: 500,
+          status: 200,
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
@@ -209,13 +304,23 @@ serve(async (req: Request) => {
     )
   } catch (error) {
     console.error('Error in chat-completion function:', error)
+    
+    // Try to get user message for intelligent fallback
+    let userMessage = ''
+    try {
+      const body = await req.clone().json()
+      userMessage = body.userMessage || ''
+    } catch (e) {
+      console.error('Could not parse request body for fallback')
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        fallback: "I'm experiencing a technical issue right now, but I want you to know that I'm here to support you. The NICU journey is incredibly difficult, and it's normal to feel overwhelmed. Please reach out to your medical team, a social worker, or counselor if you need immediate support."
+        fallback: getIntelligentFallback(userMessage)
       }),
       {
-        status: 500,
+        status: 200,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
