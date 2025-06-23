@@ -1,4 +1,88 @@
- comforting to your baby, even with breathing equipment. You're doing everything right by being there and asking questions.`
+/*
+  # ChatGPT Integration Function with Enhanced Error Handling
+
+  1. Purpose
+    - Provides secure ChatGPT integration for text conversations
+    - Handles rate limiting and quota issues gracefully
+    - Provides intelligent fallbacks for common NICU concerns
+
+  2. Security
+    - API key is stored securely in environment variables
+    - Only authenticated users can access this endpoint
+    - CORS headers configured for frontend access
+
+  3. Features
+    - NICU-specialized system prompt
+    - Rate limiting detection and handling
+    - Intelligent fallback responses
+    - Enhanced error handling and logging
+*/
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+}
+
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
+
+const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
+
+Your role is to:
+- Provide empathetic, understanding responses to emotional concerns
+- Offer evidence-based information about neonatal care when appropriate
+- Help families understand medical procedures and equipment in simple terms
+- Support parents through the emotional challenges of NICU hospitalization
+- Encourage communication with medical teams when needed
+- Provide coping strategies for stress, anxiety, and difficult emotions
+
+Guidelines:
+- Always be compassionate and understanding
+- Acknowledge the difficulty of the NICU journey
+- Provide accurate, evidence-based medical information when relevant
+- Encourage families to discuss medical decisions with their healthcare team
+- Offer emotional support and validation
+- Use clear, accessible language
+- Be sensitive to the stress and trauma families may be experiencing
+- Provide hope while being realistic about challenges
+
+Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey.`
+
+// Intelligent fallback responses for common NICU concerns
+const getIntelligentFallback = (userMessage: string): string => {
+  const message = userMessage.toLowerCase()
+  
+  if (message.includes('eiee') || message.includes('epilepsy') || message.includes('seizure')) {
+    return `I understand you're concerned about EIEE (Early Infantile Epileptic Encephalopathy). This is understandably very frightening for any parent. EIEE is a rare but serious condition that typically appears in the first few months of life with seizures that can be difficult to control.
+
+While I'm having technical difficulties accessing my full knowledge base right now, I want you to know that:
+
+• Your medical team is the best resource for specific information about your baby's condition and treatment plan
+• Many families have walked this path before you, and support is available
+• Each baby's journey with EIEE is unique, and treatments continue to improve
+• It's completely normal to feel overwhelmed, scared, and uncertain
+
+Please don't hesitate to ask your neurologist or neonatologist about:
+- Treatment options and their goals
+- What to expect in the coming days/weeks
+- Support resources for families
+- How you can best support your baby
+
+You're not alone in this journey. Your love and advocacy for your baby matters tremendously.`
+  }
+  
+  if (message.includes('breathing') || message.includes('ventilator') || message.includes('oxygen')) {
+    return `I understand you have concerns about your baby's breathing. This is one of the most common and frightening aspects of NICU care for parents. While I'm having technical difficulties right now, I want to reassure you that breathing support is very common in the NICU, and the medical team is closely monitoring your baby.
+
+Please speak with your nurse or doctor about:
+- What type of breathing support your baby is receiving
+- What the monitors and alarms mean
+- How your baby is progressing
+- When changes to breathing support might be expected
+
+Your presence and voice can be comforting to your baby, even with breathing equipment. You're doing everything right by being there and asking questions.`
   }
   
   if (message.includes('feeding') || message.includes('tube') || message.includes('milk')) {
@@ -26,7 +110,8 @@ You're doing an amazing job navigating this challenging journey. Your love and p
 }
 
 serve(async (req: Request) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`)
+  const timestamp = new Date().toISOString()
+  console.log(`[${timestamp}] ${req.method} ${req.url}`)
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -71,23 +156,41 @@ serve(async (req: Request) => {
       )
     }
 
-    // Parse request body with better error handling
+    // Enhanced request body parsing with detailed logging
     let requestBody
+    let bodyText = ''
+    
     try {
-      const bodyText = await req.text()
-      console.log('Request body length:', bodyText.length)
+      bodyText = await req.text()
+      console.log('Raw request body length:', bodyText.length)
+      console.log('Raw request body preview:', bodyText.substring(0, 200))
       
-      if (!bodyText.trim()) {
-        throw new Error('Empty request body')
+      if (!bodyText || bodyText.trim().length === 0) {
+        console.error('Empty request body received')
+        return new Response(
+          JSON.stringify({ 
+            error: 'Empty request body',
+            fallback: getIntelligentFallback('')
+          }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        )
       }
       
       requestBody = JSON.parse(bodyText)
-      console.log('Successfully parsed request body')
+      console.log('Successfully parsed request body:', Object.keys(requestBody))
     } catch (parseError) {
       console.error('Error parsing request body:', parseError)
+      console.error('Body text that failed to parse:', bodyText)
       return new Response(
         JSON.stringify({ 
           error: 'Invalid JSON in request body',
+          details: parseError.message,
           fallback: getIntelligentFallback('')
         }),
         {
@@ -111,13 +214,16 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log('Processing user message:', currentUserMessage ? 'Found' : 'Not found')
+    console.log('User message found:', !!currentUserMessage)
+    console.log('User message length:', currentUserMessage ? currentUserMessage.length : 0)
 
     if (!currentUserMessage || typeof currentUserMessage !== 'string' || !currentUserMessage.trim()) {
       console.error('No valid user message found in request')
+      console.error('Request body structure:', JSON.stringify(requestBody, null, 2))
       return new Response(
         JSON.stringify({ 
           error: 'User message is required',
+          received: { userMessage, messagesCount: messages ? messages.length : 0 },
           fallback: getIntelligentFallback('')
         }),
         {
@@ -279,6 +385,7 @@ serve(async (req: Request) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
+        details: error.message,
         fallback: getIntelligentFallback(userMessage)
       }),
       {
