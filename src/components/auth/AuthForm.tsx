@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Eye, EyeOff, Heart, Mail, Lock, User, AlertCircle, CheckCircle, Info } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface AuthFormProps {
@@ -78,20 +78,25 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
 
   if (showEmailVerification) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-6">
-              <div className="bg-gradient-to-r from-green-600 to-green-700 p-3 rounded-xl">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl">
                 <CheckCircle className="h-8 w-8 text-white" />
               </div>
-              <span className="text-3xl font-bold text-gray-900">Neomate</span>
+              <div className="flex flex-col">
+                <span className="text-3xl font-script text-teal-600">Neomate</span>
+                <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                  Neonatal AI Assistant
+                </span>
+              </div>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Check Your Email
             </h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-              <Mail className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-6 mb-6">
+              <Mail className="h-12 w-12 text-teal-600 mx-auto mb-4" />
               <p className="text-gray-700 leading-relaxed">
                 We've sent a confirmation email to <strong>{formData.email}</strong>. 
                 Please click the link in the email to verify your account and complete your registration.
@@ -113,7 +118,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
             <div className="space-y-4">
               <button
                 onClick={handleBackToSignIn}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-3 px-4 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 font-semibold"
               >
                 Back to Sign In
               </button>
@@ -125,7 +130,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
                     setShowEmailVerification(false)
                     setFormData(prev => ({ ...prev, password: '' }))
                   }}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-teal-600 hover:text-teal-700 font-medium"
                 >
                   try signing up again
                 </button>
@@ -138,15 +143,22 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-3 rounded-xl">
-              <Heart className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img 
+              src="/neomate_logo.png" 
+              alt="Neomate" 
+              className="h-10 w-10"
+            />
+            <div className="flex flex-col">
+              <span className="text-3xl font-script text-teal-600">Neomate</span>
+              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                Neonatal AI Assistant
+              </span>
             </div>
-            <span className="text-3xl font-bold text-gray-900">Neomate</span>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
             {mode === 'signin' ? 'Welcome back' : 'Create your account'}
@@ -178,7 +190,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
                     required
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -200,7 +212,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -221,7 +233,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
                   placeholder="Enter your password"
                 />
                 <button
@@ -245,10 +257,10 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           </div>
 
           {mode === 'signup' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800">
+                <Info className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-teal-800">
                   <p className="font-medium mb-1">Email Verification Required</p>
                   <p>After creating your account, you'll receive a confirmation email. Please verify your email address before signing in.</p>
                 </div>
@@ -266,7 +278,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-3 px-4 rounded-lg hover:from-teal-600 hover:to-cyan-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <div className="flex items-center justify-center space-x-2">
@@ -282,7 +294,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
             <button
               type="button"
               onClick={onToggleMode}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-teal-600 hover:text-teal-700 font-medium"
             >
               {mode === 'signin' 
                 ? "Don't have an account? Sign up" 

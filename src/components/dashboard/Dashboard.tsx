@@ -9,7 +9,6 @@ import {
   User, 
   Bot, 
   LogOut, 
-  Heart,
   Trash2,
   AlertCircle,
   Menu,
@@ -304,11 +303,18 @@ export default function Dashboard() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <Heart className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/neomate_logo.png" 
+                alt="Neomate" 
+                className="h-8 w-8"
+              />
+              <div className="flex flex-col">
+                <span className="text-xl font-script text-teal-600">Neomate</span>
+                <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                  Neonatal AI Assistant
+                </span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Neomate</span>
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -329,7 +335,7 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-            <div className="bg-blue-600 p-2 rounded-full">
+            <div className="bg-gradient-to-r from-teal-500 to-cyan-600 p-2 rounded-full">
               <User className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -345,7 +351,7 @@ export default function Dashboard() {
         <div className="p-4 space-y-3">
           <button
             onClick={createNewConversation}
-            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
           >
             <Plus className="h-5 w-5" />
             <span>New Chat</span>
@@ -370,7 +376,7 @@ export default function Dashboard() {
             <div
               key={conversation.id}
               className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group ${
-                activeConversation === conversation.id ? 'bg-blue-50 border-blue-200' : ''
+                activeConversation === conversation.id ? 'bg-teal-50 border-teal-200' : ''
               }`}
               onClick={() => setActiveConversation(conversation.id)}
             >
@@ -382,7 +388,7 @@ export default function Dashboard() {
                         type="text"
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') {
                             handleSaveTitle(conversation.id)
@@ -423,7 +429,7 @@ export default function Dashboard() {
                         e.stopPropagation()
                         handleEditTitle(conversation.id, conversation.title)
                       }}
-                      className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                      className="p-1 text-gray-400 hover:text-teal-500 transition-colors"
                       title="Edit title"
                     >
                       <Edit2 className="h-4 w-4" />
@@ -470,11 +476,11 @@ export default function Dashboard() {
                     <Menu className="h-5 w-5" />
                   </button>
                   
-                  <div className="bg-green-600 p-2 rounded-full">
+                  <div className="bg-gradient-to-r from-cyan-500 to-teal-600 p-2 rounded-full">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 truncate font-script">Neomate AI Assistant</h2>
                     <p className="text-sm text-gray-500 hidden sm:block">
                       Always here to support you through your NICU journey
                     </p>
@@ -487,8 +493,8 @@ export default function Dashboard() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-8 sm:py-12">
-                  <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <MessageCircle className="h-8 w-8 text-blue-600" />
+                  <div className="bg-teal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <MessageCircle className="h-8 w-8 text-teal-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
                   <p className="text-gray-500 mb-4 px-4">
@@ -505,13 +511,13 @@ export default function Dashboard() {
                   <div
                     className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
                       message.role === 'user'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white'
                         : 'bg-white border border-gray-200 text-gray-900'
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     <p className={`text-xs mt-1 ${
-                      message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                      message.role === 'user' ? 'text-teal-100' : 'text-gray-500'
                     }`}>
                       {new Date(message.created_at).toLocaleTimeString()}
                     </p>
@@ -523,9 +529,9 @@ export default function Dashboard() {
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 max-w-xs">
                     <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -541,13 +547,13 @@ export default function Dashboard() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base"
                   disabled={loading}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || loading}
-                  className="bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   <Send className="h-5 w-5" />
                 </button>
@@ -560,21 +566,21 @@ export default function Dashboard() {
               {/* Mobile menu button when no conversation selected */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden mb-6 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto"
+                className="lg:hidden mb-6 bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center space-x-2 mx-auto"
               >
                 <Menu className="h-5 w-5" />
                 <span>Open Menu</span>
               </button>
               
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
+              <h3 className="text-xl font-medium text-gray-900 mb-2 font-script">Welcome to Neomate</h3>
               <p className="text-gray-500 mb-6 px-4">
                 Start a conversation with your AI assistant. I'm specially trained to provide compassionate neonatal care support.
               </p>
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors block w-full"
+                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 block w-full"
                 >
                   Start New Chat
                 </button>

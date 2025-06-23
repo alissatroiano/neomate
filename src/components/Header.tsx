@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   isMobileMenuOpen: boolean;
@@ -13,22 +13,29 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-2 rounded-lg">
-              <Heart className="h-6 w-6 text-white" />
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/neomate_logo.png" 
+              alt="Neomate" 
+              className="h-10 w-10"
+            />
+            <div className="flex flex-col">
+              <span className="text-2xl font-script text-teal-600">Neomate</span>
+              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                Neonatal AI Assistant
+              </span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Neomate</span>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-            <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</a>
-            <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">Stories</a>
-            <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+            <a href="#features" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Features</a>
+            <a href="#about" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">About</a>
+            <a href="#testimonials" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Stories</a>
+            <a href="#contact" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Contact</a>
             <button 
               onClick={onGetStarted}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
             >
               Get Started
             </button>
@@ -84,13 +91,13 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-4">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-              <a href="#about" className="text-gray-700 hover:text-blue-600 transition-colors">About</a>
-              <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">Stories</a>
-              <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+              <a href="#features" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Features</a>
+              <a href="#about" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">About</a>
+              <a href="#testimonials" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Stories</a>
+              <a href="#contact" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Contact</a>
               <button 
                 onClick={onGetStarted}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors w-full"
+                className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-300 w-full font-medium"
               >
                 Get Started
               </button>
