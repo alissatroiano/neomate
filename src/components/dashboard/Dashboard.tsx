@@ -31,9 +31,8 @@ export default function Dashboard() {
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
 
-  // Check if OpenAI is configured
-  const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
-  const isOpenAIConfigured = !!OPENAI_API_KEY
+  // Check if we have Supabase Edge Function available
+  const isAIConfigured = true // Edge function should always be available
 
   useEffect(() => {
     if (user) {
@@ -172,7 +171,7 @@ export default function Dashboard() {
 
       // Check if this is the first message and update title if needed
       const currentConversation = conversations.find(c => c.id === activeConversation)
-      if (currentConversation && currentConversation.title === 'New Conversation' && isOpenAIConfigured) {
+      if (currentConversation && currentConversation.title === 'New Conversation') {
         try {
           const newTitle = await generateConversationTitle(userMessage)
           await updateConversationTitle(activeConversation, newTitle)
@@ -181,7 +180,7 @@ export default function Dashboard() {
         }
       }
 
-      // Generate AI response
+      // Generate AI response using Supabase Edge Function
       try {
         console.log('Generating AI response for message:', userMessage)
         
@@ -352,14 +351,14 @@ export default function Dashboard() {
             <span>New Chat</span>
           </button>
 
-          {!isOpenAIConfigured && (
+          {!isAIConfigured && (
             <div className="w-full bg-amber-100 border-2 border-dashed border-amber-300 px-4 py-3 rounded-lg">
               <div className="flex items-center space-x-2 text-amber-700 mb-2">
                 <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">OpenAI Setup Required</span>
+                <span className="text-sm font-medium">AI Setup Required</span>
               </div>
               <p className="text-xs text-amber-600">
-                Add VITE_OPENAI_API_KEY to your .env file to enable AI responses
+                Configure your OpenAI API key in the Supabase Edge Function to enable AI responses
               </p>
             </div>
           )}
@@ -477,7 +476,7 @@ export default function Dashboard() {
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
                     <p className="text-sm text-gray-500 hidden sm:block">
-                      {isOpenAIConfigured ? 'Powered by OpenAI - Always here to support you' : 'Always here to support you'}
+                      {isAIConfigured ? 'Powered by Supabase Edge Functions - Always here to support you' : 'Always here to support you'}
                     </p>
                   </div>
                 </div>
@@ -493,7 +492,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
                   <p className="text-gray-500 mb-4 px-4">
-                    {isOpenAIConfigured 
+                    {isAIConfigured 
                       ? "Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information."
                       : "Share how you're feeling or ask questions. I'm here to provide support during your NICU journey."
                     }
@@ -573,8 +572,8 @@ export default function Dashboard() {
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
               <p className="text-gray-500 mb-6 px-4">
-                {isOpenAIConfigured 
-                  ? "Start a conversation with your AI assistant. I'm powered by OpenAI and specially trained to provide compassionate neonatal care support."
+                {isAIConfigured 
+                  ? "Start a conversation with your AI assistant. I'm powered by Supabase Edge Functions and specially trained to provide compassionate neonatal care support."
                   : "Start a conversation with your AI assistant"
                 }
               </p>

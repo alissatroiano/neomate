@@ -1,9 +1,4 @@
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-})
+import { supabase } from './supabase'
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -57,48 +52,38 @@ Remember: Every family's NICU journey is unique. Your role is to provide comfort
 
 export async function generateChatResponse(messages: ChatMessage[]): Promise<string> {
   try {
-    console.log('Generating OpenAI response for', messages.length, 'messages')
+    console.log('Generating AI response via Supabase Edge Function for', messages.length, 'messages')
     
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: NEOMATE_SYSTEM_PROMPT },
-        ...messages
-      ],
-      temperature: 0.7,
-      max_tokens: 600,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1
+    // Get the latest user message
+    const userMessage = messages[messages.length - 1]?.content || ''
+    
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('chat-completion', {
+      body: {
+        userMessage,
+        messages: messages.slice(-8) // Send last 8 messages for context
+      }
     })
 
-    const aiResponse = response.choices[0]?.message?.content
-    
-    if (!aiResponse) {
-      throw new Error('No response generated from OpenAI')
+    if (error) {
+      console.error('Supabase Edge Function error:', error)
+      return getIntelligentFallback(userMessage)
     }
 
-    console.log('OpenAI response generated successfully')
-    return aiResponse
+    if (data?.fallback) {
+      console.log('Using fallback response from Edge Function')
+      return data.fallback
+    }
+
+    if (data?.response) {
+      console.log('AI response generated successfully via Edge Function')
+      return data.response
+    }
+
+    throw new Error('No response received from Edge Function')
 
   } catch (error: any) {
-    // Handle specific OpenAI errors with user-friendly logging
-    if (error?.status === 429) {
-      console.warn('OpenAI API quota exceeded - using intelligent fallback response')
-      return getIntelligentFallback(messages[messages.length - 1]?.content || '')
-    }
-    
-    if (error?.status === 401) {
-      console.warn('OpenAI API authentication failed - check API key configuration')
-      return 'I\'m having trouble connecting to my AI service due to an authentication issue. Please check that your OpenAI API key is correctly configured. In the meantime, please don\'t hesitate to speak directly with your baby\'s medical team about any questions or concerns.'
-    }
-    
-    if (error?.status === 403) {
-      console.warn('OpenAI API access forbidden - check API key permissions')
-      return 'I\'m unable to access my AI service right now due to access restrictions. Please ensure your OpenAI API key has the necessary permissions. Your medical team is always available to answer questions and provide support.'
-    }
-    
-    // For unexpected errors, log the full error for debugging
-    console.error('Unexpected error generating chat response:', error)
+    console.error('Error calling Supabase Edge Function:', error)
     
     // Get user message for intelligent fallback
     const userMessage = messages[messages.length - 1]?.content || ''
@@ -167,24 +152,8 @@ You're doing an amazing job navigating this challenging journey. Your love and p
 
 export async function generateConversationTitle(firstMessage: string): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'Generate a short, empathetic title (3-6 words) for a NICU support conversation based on the first message. Focus on the main topic or concern. Examples: "Breathing Concerns", "First NICU Day", "Feeding Questions", "Going Home Soon"'
-        },
-        {
-          role: 'user',
-          content: firstMessage
-        }
-      ],
-      temperature: 0.5,
-      max_tokens: 20
-    })
-
-    const title = response.choices[0]?.message?.content?.trim()
-    return title || generateLocalTitle(firstMessage)
+    // For now, use local title generation to avoid additional API calls
+    return generateLocalTitle(firstMessage)
   } catch (error) {
     console.error('Error generating conversation title:', error)
     return generateLocalTitle(firstMessage)
