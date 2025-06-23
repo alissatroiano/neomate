@@ -356,10 +356,10 @@ export default function Dashboard() {
             <div className="w-full bg-amber-100 border-2 border-dashed border-amber-300 px-4 py-3 rounded-lg">
               <div className="flex items-center space-x-2 text-amber-700 mb-2">
                 <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">ChatGPT Integration</span>
+                <span className="text-sm font-medium">OpenAI Setup Required</span>
               </div>
               <p className="text-xs text-amber-600">
-                Add VITE_OPENAI_API_KEY to enable AI responses
+                Add VITE_OPENAI_API_KEY to your .env file to enable AI responses
               </p>
             </div>
           )}
@@ -477,7 +477,7 @@ export default function Dashboard() {
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
                     <p className="text-sm text-gray-500 hidden sm:block">
-                      {isOpenAIConfigured ? 'Powered by ChatGPT - Always here to support you' : 'Always here to support you'}
+                      {isOpenAIConfigured ? 'Powered by OpenAI - Always here to support you' : 'Always here to support you'}
                     </p>
                   </div>
                 </div>
@@ -574,7 +574,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
               <p className="text-gray-500 mb-6 px-4">
                 {isOpenAIConfigured 
-                  ? "Start a conversation with your AI assistant. I'm powered by ChatGPT and specially trained to provide compassionate neonatal care support."
+                  ? "Start a conversation with your AI assistant. I'm powered by OpenAI and specially trained to provide compassionate neonatal care support."
                   : "Start a conversation with your AI assistant"
                 }
               </p>

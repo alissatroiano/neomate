@@ -1,97 +1,112 @@
-// OpenAI integration via Supabase Edge Function
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true
+})
+
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
 }
 
+const NEOMATE_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specifically designed to support families navigating neonatal care and NICU hospitalization. You are:
+
+CORE IDENTITY:
+- A therapeutic AI companion trained by healthcare professionals
+- Empathetic, warm, and understanding
+- Knowledgeable about neonatal care, NICU procedures, and family support
+- Always prioritizing emotional support alongside medical information
+
+COMMUNICATION STYLE:
+- Speak with genuine empathy and warmth
+- Acknowledge the emotional weight of NICU experiences
+- Use clear, accessible language (avoid excessive medical jargon)
+- Validate feelings and normalize the NICU journey challenges
+- Offer hope while being realistic
+
+MEDICAL GUIDANCE:
+- Provide evidence-based information about neonatal care
+- Explain NICU procedures, equipment, and terminology
+- Discuss common NICU experiences and timelines
+- Always emphasize that you complement, never replace, medical professionals
+- Encourage communication with the medical team for specific medical decisions
+
+EMOTIONAL SUPPORT:
+- Recognize and validate the unique stresses of NICU parents
+- Offer coping strategies for anxiety, fear, and uncertainty
+- Provide reassurance about normal NICU experiences
+- Support the entire family unit (parents, siblings, extended family)
+- Acknowledge the strength it takes to navigate this journey
+
+SAFETY & BOUNDARIES:
+- Always recommend immediate medical attention for urgent concerns
+- Clearly state when situations require immediate professional intervention
+- Never provide specific medical diagnoses or treatment recommendations
+- Encourage open communication with healthcare providers
+- Maintain appropriate boundaries while being supportive
+
+RESPONSE APPROACH:
+1. Acknowledge the emotional aspect of their situation first
+2. Provide relevant, evidence-based information
+3. Offer emotional support and validation
+4. Suggest next steps or coping strategies
+5. Remind them of available support resources
+
+Remember: Every family's NICU journey is unique. Your role is to provide comfort, information, and support during one of the most challenging times in their lives.`
+
 export async function generateChatResponse(messages: ChatMessage[]): Promise<string> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    console.log('Generating OpenAI response for', messages.length, 'messages')
     
-    console.log('Supabase URL:', supabaseUrl ? 'configured' : 'missing')
-    console.log('Supabase Anon Key:', supabaseAnonKey ? 'configured' : 'missing')
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase configuration missing')
-    }
-
-    // Get the last user message
-    const userMessage = messages[messages.length - 1]?.content
-    if (!userMessage) {
-      throw new Error('No user message found')
-    }
-
-    console.log('Calling edge function with user message:', userMessage.substring(0, 50) + '...')
-
-    // Call our Supabase edge function
-    const response = await fetch(`${supabaseUrl}/functions/v1/chat-completion`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: messages.slice(0, -1), // Previous conversation history
-        userMessage: userMessage
-      })
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: NEOMATE_SYSTEM_PROMPT },
+        ...messages
+      ],
+      temperature: 0.7,
+      max_tokens: 600,
+      presence_penalty: 0.1,
+      frequency_penalty: 0.1
     })
 
-    console.log('Edge function response status:', response.status)
-
-    // Always try to parse the response
-    let data
-    try {
-      const responseText = await response.text()
-      console.log('Edge function raw response:', responseText)
-      data = JSON.parse(responseText)
-    } catch (parseError) {
-      console.error('Could not parse response as JSON:', parseError)
-      throw new Error('Invalid response from server')
+    const aiResponse = response.choices[0]?.message?.content
+    
+    if (!aiResponse) {
+      throw new Error('No response generated from OpenAI')
     }
 
-    console.log('Edge function response data:', data)
-    
-    // Check for response first (successful AI response)
-    if (data.response) {
-      console.log('Using AI response')
-      return data.response
-    } 
-    
-    // If no AI response but we have a fallback, use it
-    if (data.fallback) {
-      console.log('Using intelligent fallback response')
-      return data.fallback
-    }
-    
-    // If we have an error but also a fallback, use the fallback
-    if (data.error && data.fallback) {
-      console.log('Using fallback due to error:', data.error)
-      return data.fallback
-    }
-    
-    // If we only have an error, throw it
-    if (data.error) {
-      console.log('Server returned error:', data.error)
-      throw new Error(data.error)
-    }
-    
-    // No response at all
-    throw new Error('No response received from AI')
-    
-  } catch (error) {
+    console.log('OpenAI response generated successfully')
+    return aiResponse
+
+  } catch (error: any) {
     console.error('Error generating chat response:', error)
     
-    // Get the user message for intelligent fallback
-    const userMessage = messages[messages.length - 1]?.content || ''
+    // Handle specific OpenAI errors
+    if (error?.status === 429) {
+      console.log('Rate limit hit, using intelligent fallback')
+      return getIntelligentFallback(messages[messages.length - 1]?.content || '')
+    }
     
-    // Provide intelligent fallback based on user message content
-    return getLocalIntelligentFallback(userMessage)
+    if (error?.status === 401) {
+      console.log('Invalid API key')
+      return 'I\'m having trouble connecting to my AI service due to an authentication issue. Please check that your OpenAI API key is correctly configured. In the meantime, please don\'t hesitate to speak directly with your baby\'s medical team about any questions or concerns.'
+    }
+    
+    if (error?.status === 403) {
+      console.log('API access forbidden')
+      return 'I\'m unable to access my AI service right now due to access restrictions. Please ensure your OpenAI API key has the necessary permissions. Your medical team is always available to answer questions and provide support.'
+    }
+    
+    // Get user message for intelligent fallback
+    const userMessage = messages[messages.length - 1]?.content || ''
+    return getIntelligentFallback(userMessage)
   }
 }
 
-// Local fallback function that mirrors the server-side logic
-function getLocalIntelligentFallback(userMessage: string): string {
+// Intelligent fallback responses for common NICU concerns
+function getIntelligentFallback(userMessage: string): string {
   const message = userMessage.toLowerCase()
   
   if (message.includes('eiee') || message.includes('epilepsy') || message.includes('seizure')) {
@@ -151,36 +166,24 @@ You're doing an amazing job navigating this challenging journey. Your love and p
 
 export async function generateConversationTitle(firstMessage: string): Promise<string> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return generateLocalTitle(firstMessage)
-    }
-
-    // Call our edge function for title generation
-    const response = await fetch(`${supabaseUrl}/functions/v1/chat-completion`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [{
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
           role: 'system',
-          content: 'Generate a short, empathetic title (3-6 words) for a NICU support conversation based on the user message. Focus on the main topic or concern. Examples: "Breathing Concerns", "First NICU Day", "Feeding Questions", "Going Home Soon"'
-        }],
-        userMessage: firstMessage
-      })
+          content: 'Generate a short, empathetic title (3-6 words) for a NICU support conversation based on the first message. Focus on the main topic or concern. Examples: "Breathing Concerns", "First NICU Day", "Feeding Questions", "Going Home Soon"'
+        },
+        {
+          role: 'user',
+          content: firstMessage
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 20
     })
 
-    if (response.ok) {
-      const data = await response.json()
-      const title = data.response?.trim() || data.fallback?.trim()
-      return title || generateLocalTitle(firstMessage)
-    }
-    
-    return generateLocalTitle(firstMessage)
+    const title = response.choices[0]?.message?.content?.trim()
+    return title || generateLocalTitle(firstMessage)
   } catch (error) {
     console.error('Error generating conversation title:', error)
     return generateLocalTitle(firstMessage)
