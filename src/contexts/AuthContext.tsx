@@ -37,16 +37,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error getting session:', error)
-        }
-        
-        setSession(session)
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          await fetchProfile(session.user.id)
+          // Clear any stale session data if there's an error
+          await supabase.auth.signOut()
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+        } else if (!session) {
+          // If no session exists, ensure we clear any stale data
+          await supabase.auth.signOut()
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+        } else {
+          setSession(session)
+          setUser(session.user)
+          
+          if (session.user) {
+            await fetchProfile(session.user.id)
+          }
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error)
+        // Clear any stale session data on unexpected errors
+        await supabase.auth.signOut()
+        setSession(null)
+        setUser(null)
+        setProfile(null)
       } finally {
         setLoading(false)
       }

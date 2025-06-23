@@ -40,6 +40,8 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
       if (result.error) {
         if (result.error.message.includes('Email not confirmed')) {
           setError('Please check your email and click the confirmation link before signing in.')
+        } else if (result.error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.')
         } else {
           setError(result.error.message)
         }
@@ -47,7 +49,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
         onSuccess?.()
       }
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError('An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -58,6 +60,10 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
       ...prev,
       [e.target.name]: e.target.value
     }))
+    // Clear error when user starts typing
+    if (error) {
+      setError(null)
+    }
   }
 
   const handleBackToSignIn = () => {
@@ -158,7 +164,7 @@ export default function AuthForm({ mode, onToggleMode, onSuccess }: AuthFormProp
           <div className="space-y-4">
             {mode === 'signup' && (
               <div>
-                <label htmlFor="fullName\" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
