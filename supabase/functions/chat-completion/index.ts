@@ -158,7 +158,16 @@ serve(async (req: Request) => {
     
     const { messages, userMessage } = requestBody
 
-    if (!userMessage) {
+    // Extract user message - either from userMessage field or last message in array
+    let currentUserMessage = userMessage
+    if (!currentUserMessage && messages && Array.isArray(messages) && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage && lastMessage.role === 'user') {
+        currentUserMessage = lastMessage.content
+      }
+    }
+
+    if (!currentUserMessage) {
       return new Response(
         JSON.stringify({ error: 'User message is required' }),
         {
@@ -179,22 +188,23 @@ serve(async (req: Request) => {
       }
     ]
 
-    // Add recent conversation history (last 8 messages for context, reduced to save tokens)
+    // Add recent conversation history (last 6 messages for context, reduced to save tokens)
     if (messages && Array.isArray(messages)) {
-      const recentMessages = messages.slice(-8).map((msg: any) => ({
+      const recentMessages = messages.slice(-6).map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content
       }))
       conversationMessages.push(...recentMessages)
+    } else {
+      // If no conversation history, just add the current user message
+      conversationMessages.push({
+        role: "user",
+        content: currentUserMessage
+      })
     }
 
-    // Add the current user message
-    conversationMessages.push({
-      role: "user",
-      content: userMessage
-    })
-
     console.log('Making OpenAI API request with', conversationMessages.length, 'messages')
+    console.log('Current user message:', currentUserMessage)
 
     // Make request to OpenAI API with retry logic
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -226,7 +236,7 @@ serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ 
             error: 'Rate limit exceeded',
-            fallback: getIntelligentFallback(userMessage)
+            fallback: getIntelligentFallback(currentUserMessage)
           }),
           {
             status: 200, // Return 200 so frontend uses fallback
@@ -243,7 +253,7 @@ serve(async (req: Request) => {
         return new Response(
           JSON.stringify({ 
             error: 'Invalid API key',
-            fallback: getIntelligentFallback(userMessage)
+            fallback: getIntelligentFallback(currentUserMessage)
           }),
           {
             status: 200,
@@ -258,7 +268,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to get response from AI service',
-          fallback: getIntelligentFallback(userMessage)
+          fallback: getIntelligentFallback(currentUserMessage)
         }),
         {
           status: 200, // Return 200 so frontend uses fallback
@@ -280,7 +290,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'No response generated',
-          fallback: getIntelligentFallback(userMessage)
+          fallback: getIntelligentFallback(currentUserMessage)
         }),
         {
           status: 200,
@@ -309,7 +319,7 @@ serve(async (req: Request) => {
     let userMessage = ''
     try {
       const body = await req.clone().json()
-      userMessage = body.userMessage || ''
+      userMessage = body.userMessage || (body.messages && body.messages.length > 0 ? body.messages[body.messages.length - 1]?.content : '') || ''
     } catch (e) {
       console.error('Could not parse request body for fallback')
     }
