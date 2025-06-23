@@ -26,7 +26,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
+const OPENAI_API_KEY = Deno.env.get("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")
 
 const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
 
