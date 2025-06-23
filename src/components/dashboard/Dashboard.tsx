@@ -31,8 +31,8 @@ export default function Dashboard() {
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
 
-  // Check if we have Supabase Edge Function available
-  const isAIConfigured = true // Edge function should always be available
+  // AI is configured via Supabase Edge Functions
+  const isAIConfigured = true
 
   useEffect(() => {
     if (user) {
@@ -476,7 +476,7 @@ export default function Dashboard() {
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-gray-900 truncate">Neomate AI Assistant</h2>
                     <p className="text-sm text-gray-500 hidden sm:block">
-                      {isAIConfigured ? 'Powered by Supabase Edge Functions - Always here to support you' : 'Always here to support you'}
+                      Always here to support you through your NICU journey
                     </p>
                   </div>
                 </div>
@@ -492,10 +492,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
                   <p className="text-gray-500 mb-4 px-4">
-                    {isAIConfigured 
-                      ? "Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information."
-                      : "Share how you're feeling or ask questions. I'm here to provide support during your NICU journey."
-                    }
+                    Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information.
                   </p>
                 </div>
               )}
@@ -572,10 +569,7 @@ export default function Dashboard() {
               <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">Welcome to Neomate</h3>
               <p className="text-gray-500 mb-6 px-4">
-                {isAIConfigured 
-                  ? "Start a conversation with your AI assistant. I'm powered by Supabase Edge Functions and specially trained to provide compassionate neonatal care support."
-                  : "Start a conversation with your AI assistant"
-                }
+                Start a conversation with your AI assistant. I'm specially trained to provide compassionate neonatal care support.
               </p>
               <div className="space-y-3">
                 <button
