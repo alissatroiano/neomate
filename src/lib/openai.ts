@@ -57,16 +57,26 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     // Get the latest user message
     const userMessage = messages[messages.length - 1]?.content || ''
     
-    // Call the Supabase Edge Function
+    // Call the Supabase Edge Function with enhanced error handling
     const { data, error } = await supabase.functions.invoke('chat-completion', {
       body: {
         userMessage,
         messages: messages.slice(-8) // Send last 8 messages for context
+      },
+      headers: {
+        'Content-Type': 'application/json',
       }
     })
 
     if (error) {
       console.error('Supabase Edge Function error:', error)
+      
+      // Check if it's a network/connectivity error
+      if (error.message?.includes('Failed to send a request')) {
+        console.log('Network connectivity issue, using local fallback')
+        return getIntelligentFallback(userMessage)
+      }
+      
       return getIntelligentFallback(userMessage)
     }
 

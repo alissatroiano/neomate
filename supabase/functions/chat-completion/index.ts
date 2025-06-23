@@ -1,5 +1,5 @@
 /*
-  # ChatGPT Integration Function with Rate Limiting
+  # ChatGPT Integration Function with Enhanced CORS and Error Handling
 
   1. Purpose
     - Provides secure ChatGPT integration for text conversations
@@ -9,13 +9,13 @@
   2. Security
     - API key is stored securely in environment variables
     - Only authenticated users can access this endpoint
-    - CORS headers configured for frontend access
+    - Enhanced CORS headers for better compatibility
 
   3. Features
     - NICU-specialized system prompt
     - Rate limiting detection and handling
     - Intelligent fallback responses
-    - Error handling and logging
+    - Enhanced error handling and logging
 */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
@@ -23,7 +23,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
+  "Access-Control-Max-Age": "86400",
 }
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
@@ -110,10 +111,11 @@ You're doing an amazing job navigating this challenging journey. Your love and p
 }
 
 serve(async (req: Request) => {
-  console.log('Chat completion function called:', req.method)
+  console.log(`Chat completion function called: ${req.method} ${req.url}`)
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log('Handling CORS preflight request')
     return new Response(null, {
       status: 200,
       headers: corsHeaders,
@@ -131,7 +133,7 @@ serve(async (req: Request) => {
           fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting to my AI service right now, please know that your feelings are valid and you're not alone in this journey. Please don't hesitate to speak with your medical team or a counselor if you need immediate support."
         }),
         {
-          status: 500,
+          status: 200, // Return 200 so frontend uses fallback
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
@@ -141,6 +143,7 @@ serve(async (req: Request) => {
     }
 
     if (req.method !== "POST") {
+      console.log(`Method ${req.method} not allowed`)
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
         {
@@ -153,8 +156,30 @@ serve(async (req: Request) => {
       )
     }
 
-    const requestBody = await req.json()
-    console.log('Request body received:', JSON.stringify(requestBody, null, 2))
+    // Parse request body
+    let requestBody
+    try {
+      const bodyText = await req.text()
+      console.log('Raw request body:', bodyText)
+      requestBody = JSON.parse(bodyText)
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid JSON in request body',
+          fallback: getIntelligentFallback('')
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      )
+    }
+
+    console.log('Parsed request body:', JSON.stringify(requestBody, null, 2))
     
     const { messages, userMessage } = requestBody
 
@@ -167,9 +192,15 @@ serve(async (req: Request) => {
       }
     }
 
+    console.log('Extracted user message:', currentUserMessage)
+
     if (!currentUserMessage) {
+      console.error('No user message found in request')
       return new Response(
-        JSON.stringify({ error: 'User message is required' }),
+        JSON.stringify({ 
+          error: 'User message is required',
+          fallback: getIntelligentFallback('')
+        }),
         {
           status: 400,
           headers: {
@@ -281,7 +312,7 @@ serve(async (req: Request) => {
     }
 
     const data = await response.json()
-    console.log('OpenAI API response data:', JSON.stringify(data, null, 2))
+    console.log('OpenAI API response received successfully')
     
     const aiResponse = data.choices?.[0]?.message?.content
 
