@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+config.js
+.env.example
+.env.local
+.config
