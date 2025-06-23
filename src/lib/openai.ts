@@ -81,23 +81,24 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     return aiResponse
 
   } catch (error: any) {
-    console.error('Error generating chat response:', error)
-    
-    // Handle specific OpenAI errors
+    // Handle specific OpenAI errors with user-friendly logging
     if (error?.status === 429) {
-      console.log('Rate limit hit, using intelligent fallback')
+      console.warn('OpenAI API quota exceeded - using intelligent fallback response')
       return getIntelligentFallback(messages[messages.length - 1]?.content || '')
     }
     
     if (error?.status === 401) {
-      console.log('Invalid API key')
+      console.warn('OpenAI API authentication failed - check API key configuration')
       return 'I\'m having trouble connecting to my AI service due to an authentication issue. Please check that your OpenAI API key is correctly configured. In the meantime, please don\'t hesitate to speak directly with your baby\'s medical team about any questions or concerns.'
     }
     
     if (error?.status === 403) {
-      console.log('API access forbidden')
+      console.warn('OpenAI API access forbidden - check API key permissions')
       return 'I\'m unable to access my AI service right now due to access restrictions. Please ensure your OpenAI API key has the necessary permissions. Your medical team is always available to answer questions and provide support.'
     }
+    
+    // For unexpected errors, log the full error for debugging
+    console.error('Unexpected error generating chat response:', error)
     
     // Get user message for intelligent fallback
     const userMessage = messages[messages.length - 1]?.content || ''
