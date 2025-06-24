@@ -1,3 +1,6 @@
+import OpenAI from "openai";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
 /*
   # ChatGPT Integration Function with Enhanced Error Handling
 
@@ -18,7 +21,6 @@
     - Enhanced error handling and logging
 */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +28,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 
-const OPENAI_API_KEY = Deno.env.get("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")
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
+console.log('OpenAI API Key:', !!OPENAI_API_KEY);
 
 const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
 
@@ -268,8 +271,8 @@ serve(async (req: Request) => {
     // Make request to OpenAI API with enhanced error handling
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+         headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
