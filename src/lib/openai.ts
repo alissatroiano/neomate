@@ -76,46 +76,40 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
       requestBodySize: JSON.stringify(requestBody).length
     })
 
-    // Call the Supabase Edge Function with proper headers and body
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-completion`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody)
+    // Use Supabase client's functions.invoke method for better error handling
+    const { data, error } = await supabase.functions.invoke('chat-completion', {
+      body: requestBody
     })
 
-    console.log('Edge Function response status:', response.status)
+    console.log('Edge Function response:', { data, error })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Edge Function HTTP error:', response.status, errorText)
+    if (error) {
+      console.error('Supabase Edge Function error:', error)
       
-      // Try to parse error response for fallback
-      try {
-        const errorData = JSON.parse(errorText)
-        if (errorData.fallback) {
-          console.log('Using fallback from error response')
-          return errorData.fallback
-        }
-      } catch (e) {
-        console.log('Could not parse error response as JSON')
+      // Check if it's a network/connectivity error
+      if (error.message?.includes('Failed to send a request') || 
+          error.message?.includes('fetch') ||
+          error.message?.includes('Failed to fetch')) {
+        console.log('Network connectivity issue, using local fallback')
+        return getIntelligentFallback(userMessage)
+      }
+      
+      // Check if it's a function error with fallback
+      if (error.context?.body?.fallback) {
+        console.log('Using fallback from Edge Function error response')
+        return error.context.body.fallback
       }
       
       return getIntelligentFallback(userMessage)
     }
 
-    const data = await response.json()
-    console.log('Edge Function response received:', { hasResponse: !!data.response, hasFallback: !!data.fallback })
-
     // Handle successful response
-    if (data.fallback) {
+    if (data?.fallback) {
       console.log('Using fallback response from Edge Function')
       return data.fallback
     }
 
-    if (data.response) {
+    if (data?.response) {
       console.log('AI response generated successfully via Edge Function')
       return data.response
     }
