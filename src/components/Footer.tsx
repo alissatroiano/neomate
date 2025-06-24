@@ -50,15 +50,14 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Resources</h3>
             <div className="space-y-2">
-              <a href="#" className="block text-gray-400 hover:text-teal-400 transition-colors">NICU Guide</a>
-              <a href="#" className="block text-gray-400 hover:text-teal-400 transition-colors">Support Groups</a>
-              <a href="#" className="block text-gray-400 hover:text-teal-400 transition-colors">Medical Resources</a>
-              <a href="#" className="block text-gray-400 hover:text-teal-400 transition-colors">FAQ</a>
+              <a href="https://www.mmhla.org/nicu-resources-for-parents" target="_blank" className="block text-gray-400 hover:text-teal-400 transition-colors">Support Groups</a>
+              <a href="https://nicuconnections.com/wp-content/uploads/2023/12/nicu-family-guide-en.pdf" target="_blank" className="block text-gray-400 hover:text-teal-400 transition-colors">NICU Guide</a>
+              <a href="#about" className="block text-gray-400 hover:text-teal-400 transition-colors">FAQ</a>
             </div>
           </div>
 
           {/* Contact */}
-          <div className="space-y-4">
+          <div className="space-y-4" id='contact'>
             <h3 className="text-lg font-semibold">Get in Touch</h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
