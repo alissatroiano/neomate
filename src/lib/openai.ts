@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from './supabase';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -79,6 +79,7 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     const { data, error } = await supabase.functions.invoke('chat-completion', {
       body: requestBody,
       headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       }
     })
