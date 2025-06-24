@@ -29,15 +29,23 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [connectionError, setConnectionError] = useState<string | null>(null)
 
-  // AI is configured via Supabase Edge Functions
-  const isAIConfigured = true
+  // Check if Supabase is properly configured
+  const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && 
+                               import.meta.env.VITE_SUPABASE_ANON_KEY &&
+                               import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co'
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setConnectionError('Supabase is not properly configured. Please check your environment variables.')
+      return
+    }
+
     if (user) {
       fetchConversations()
     }
-  }, [user])
+  }, [user, isSupabaseConfigured])
 
   useEffect(() => {
     if (activeConversation) {
@@ -49,6 +57,7 @@ export default function Dashboard() {
 
   const fetchConversations = async () => {
     try {
+      console.log('Fetching conversations for user:', user?.id)
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
@@ -56,20 +65,26 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Error fetching conversations:', error)
+        setConnectionError('Failed to load conversations. Please check your connection.')
         return
       }
 
+      console.log(`Fetched ${data?.length || 0} conversations`)
       setConversations(data || [])
+      setConnectionError(null)
+      
       if (data && data.length > 0 && !activeConversation) {
         setActiveConversation(data[0].id)
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)
+      setConnectionError('Failed to connect to the database.')
     }
   }
 
   const fetchMessages = async (conversationId: string) => {
     try {
+      console.log('Fetching messages for conversation:', conversationId)
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -78,13 +93,16 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Error fetching messages:', error)
+        setConnectionError('Failed to load messages.')
         return
       }
 
       console.log(`Fetched ${data?.length || 0} messages for conversation ${conversationId}`)
       setMessages(data || [])
+      setConnectionError(null)
     } catch (error) {
       console.error('Error fetching messages:', error)
+      setConnectionError('Failed to load conversation.')
     }
   }
 
@@ -92,6 +110,7 @@ export default function Dashboard() {
     if (!user) return
 
     try {
+      console.log('Creating new conversation for user:', user.id)
       const { data, error } = await supabase
         .from('conversations')
         .insert([
@@ -105,14 +124,18 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Error creating conversation:', error)
+        setConnectionError('Failed to create new conversation.')
         return
       }
 
+      console.log('New conversation created:', data.id)
       setConversations(prev => [data, ...prev])
       setActiveConversation(data.id)
       setMessages([])
+      setConnectionError(null)
     } catch (error) {
       console.error('Error creating conversation:', error)
+      setConnectionError('Failed to create conversation.')
     }
   }
 
@@ -146,6 +169,7 @@ export default function Dashboard() {
     setLoading(true)
     const userMessage = newMessage.trim()
     setNewMessage('')
+    setConnectionError(null)
 
     try {
       console.log(`Sending message: "${userMessage}" (${userMessage.length} chars)`)
@@ -166,8 +190,9 @@ export default function Dashboard() {
 
       if (userError) {
         console.error('Error sending message:', userError)
-        setLoading(false)
+        setConnectionError('Failed to send message. Please try again.')
         setNewMessage(userMessage) // Restore the message
+        setLoading(false)
         return
       }
 
@@ -219,6 +244,7 @@ export default function Dashboard() {
           console.log('AI message saved successfully')
         } else {
           console.error('Error saving AI message:', aiError)
+          setConnectionError('AI response generated but failed to save.')
         }
       } catch (error) {
         console.error('Error generating AI response:', error)
@@ -244,6 +270,7 @@ export default function Dashboard() {
       
     } catch (error) {
       console.error('Error in sendMessage:', error)
+      setConnectionError('Failed to send message. Please check your connection.')
       setNewMessage(userMessage) // Restore the message on error
     } finally {
       setLoading(false)
@@ -302,6 +329,25 @@ export default function Dashboard() {
     }
   }
 
+  // Show connection error if Supabase is not configured
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Required</h2>
+            <p className="text-gray-600">
+              Supabase environment variables are not properly configured. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen bg-gray-50 flex relative">
       {/* Mobile Overlay */}
@@ -312,12 +358,26 @@ export default function Dashboard() {
         />
       )}
 
+      {/* Connection Error Banner */}
+      {connectionError && (
+        <div className="fixed top-0 left-0 right-0 bg-red-500 text-white px-4 py-2 text-center text-sm z-50">
+          {connectionError}
+          <button 
+            onClick={() => setConnectionError(null)}
+            className="ml-2 text-red-200 hover:text-white"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className={`
         fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
         w-80 bg-white border-r border-gray-200 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${connectionError ? 'mt-10' : ''}
       `}>
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
@@ -370,23 +430,12 @@ export default function Dashboard() {
         <div className="p-4 space-y-3">
           <button
             onClick={createNewConversation}
-            className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            disabled={!isSupabaseConfigured}
+            className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-5 w-5" />
             <span>New Chat</span>
           </button>
-
-          {!isAIConfigured && (
-            <div className="w-full bg-amber-100 border-2 border-dashed border-amber-300 px-4 py-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-amber-700 mb-2">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">AI Setup Required</span>
-              </div>
-              <p className="text-xs text-amber-600">
-                Configure your OpenAI API key in the Supabase Edge Function to enable AI responses
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Conversations List */}
@@ -472,7 +521,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${connectionError ? 'mt-10' : ''}`}>
         {activeConversation ? (
           <>
             {/* Chat Header */}
@@ -505,13 +554,6 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                
-                {/* Debug info in development */}
-                {import.meta.env.DEV && (
-                  <div className="text-xs text-gray-400">
-                    {messages.length} messages
-                  </div>
-                )}
               </div>
             </div>
 
@@ -573,13 +615,13 @@ export default function Dashboard() {
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
                   className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base resize-none"
-                  disabled={loading}
+                  disabled={loading || !isSupabaseConfigured}
                   rows={1}
                   style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!newMessage.trim() || loading}
+                  disabled={!newMessage.trim() || loading || !isSupabaseConfigured}
                   className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   <Send className="h-5 w-5" />
@@ -607,7 +649,8 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
-                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 block w-full"
+                  disabled={!isSupabaseConfigured}
+                  className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 block w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Start New Chat
                 </button>
