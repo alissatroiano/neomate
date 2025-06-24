@@ -1,5 +1,5 @@
 /*
-  # ChatGPT Integration Function with Enhanced CORS and Error Handling
+  # ChatGPT Integration Function with Enhanced Error Handling
 
   1. Purpose
     - Provides secure ChatGPT integration for text conversations
@@ -9,7 +9,7 @@
   2. Security
     - API key is stored securely in environment variables
     - Only authenticated users can access this endpoint
-    - Enhanced CORS headers for better compatibility
+    - CORS headers configured for frontend access
 
   3. Features
     - NICU-specialized system prompt
@@ -23,11 +23,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
-  "Access-Control-Max-Age": "86400",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
+const OPENAI_API_KEY = Deno.env.get("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")
 
 const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
 
@@ -111,7 +110,8 @@ You're doing an amazing job navigating this challenging journey. Your love and p
 }
 
 serve(async (req: Request) => {
-  console.log(`Chat completion function called: ${req.method} ${req.url}`)
+  const timestamp = new Date().toISOString()
+  console.log(`[${timestamp}] ${req.method} ${req.url}`)
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -133,7 +133,7 @@ serve(async (req: Request) => {
           fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting to my AI service right now, please know that your feelings are valid and you're not alone in this journey. Please don't hesitate to speak with your medical team or a counselor if you need immediate support."
         }),
         {
-          status: 200, // Return 200 so frontend uses fallback
+          status: 200,
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
@@ -156,17 +156,41 @@ serve(async (req: Request) => {
       )
     }
 
-    // Parse request body
+    // Enhanced request body parsing with detailed logging
     let requestBody
+    let bodyText = ''
+    
     try {
-      const bodyText = await req.text()
-      console.log('Raw request body:', bodyText)
+      bodyText = await req.text()
+      console.log('Raw request body length:', bodyText.length)
+      console.log('Raw request body preview:', bodyText.substring(0, 200))
+      
+      if (!bodyText || bodyText.trim().length === 0) {
+        console.error('Empty request body received')
+        return new Response(
+          JSON.stringify({ 
+            error: 'Empty request body',
+            fallback: getIntelligentFallback('')
+          }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        )
+      }
+      
       requestBody = JSON.parse(bodyText)
+      console.log('Successfully parsed request body:', Object.keys(requestBody))
     } catch (parseError) {
       console.error('Error parsing request body:', parseError)
+      console.error('Body text that failed to parse:', bodyText)
       return new Response(
         JSON.stringify({ 
           error: 'Invalid JSON in request body',
+          details: parseError.message,
           fallback: getIntelligentFallback('')
         }),
         {
@@ -178,12 +202,10 @@ serve(async (req: Request) => {
         }
       )
     }
-
-    console.log('Parsed request body:', JSON.stringify(requestBody, null, 2))
     
     const { messages, userMessage } = requestBody
 
-    // Extract user message - either from userMessage field or last message in array
+    // Extract user message with multiple fallback strategies
     let currentUserMessage = userMessage
     if (!currentUserMessage && messages && Array.isArray(messages) && messages.length > 0) {
       const lastMessage = messages[messages.length - 1]
@@ -192,13 +214,16 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log('Extracted user message:', currentUserMessage)
+    console.log('User message found:', !!currentUserMessage)
+    console.log('User message length:', currentUserMessage ? currentUserMessage.length : 0)
 
-    if (!currentUserMessage) {
-      console.error('No user message found in request')
+    if (!currentUserMessage || typeof currentUserMessage !== 'string' || !currentUserMessage.trim()) {
+      console.error('No valid user message found in request')
+      console.error('Request body structure:', JSON.stringify(requestBody, null, 2))
       return new Response(
         JSON.stringify({ 
           error: 'User message is required',
+          received: { userMessage, messagesCount: messages ? messages.length : 0 },
           fallback: getIntelligentFallback('')
         }),
         {
@@ -219,50 +244,52 @@ serve(async (req: Request) => {
       }
     ]
 
-    // Add recent conversation history (last 6 messages for context, reduced to save tokens)
-    if (messages && Array.isArray(messages)) {
+    // Add recent conversation history (last 6 messages for context)
+    if (messages && Array.isArray(messages) && messages.length > 0) {
       const recentMessages = messages.slice(-6).map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }))
+        content: msg.content || ''
+      })).filter(msg => msg.content.trim())
+      
       conversationMessages.push(...recentMessages)
-    } else {
-      // If no conversation history, just add the current user message
+      console.log(`Added ${recentMessages.length} context messages`)
+    }
+
+    // Ensure we have the current user message
+    if (!conversationMessages.some(msg => msg.role === 'user' && msg.content === currentUserMessage)) {
       conversationMessages.push({
         role: "user",
         content: currentUserMessage
       })
     }
 
-    console.log('Making OpenAI API request with', conversationMessages.length, 'messages')
-    console.log('Current user message:', currentUserMessage)
+    console.log(`Making OpenAI API request with ${conversationMessages.length} messages`)
 
-    // Make request to OpenAI API with retry logic
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Make request to OpenAI API with enhanced error handling
+    const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // Using more cost-effective model to reduce rate limiting
+        model: "gpt-3.5-turbo",
         messages: conversationMessages,
-        max_tokens: 400, // Reduced to save on quota
+        max_tokens: 400,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
       }),
     })
 
-    console.log('OpenAI API response status:', response.status)
+    console.log(`OpenAI API response status: ${openAIResponse.status}`)
 
-    if (!response.ok) {
-      console.error('OpenAI API error:', response.status, response.statusText)
-      const errorText = await response.text()
-      console.error('OpenAI API error details:', errorText)
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text()
+      console.error(`OpenAI API error: ${openAIResponse.status} - ${errorText}`)
       
       // Handle specific error types
-      if (response.status === 429) {
+      if (openAIResponse.status === 429) {
         console.log('Rate limit hit, using intelligent fallback')
         return new Response(
           JSON.stringify({ 
@@ -270,7 +297,7 @@ serve(async (req: Request) => {
             fallback: getIntelligentFallback(currentUserMessage)
           }),
           {
-            status: 200, // Return 200 so frontend uses fallback
+            status: 200,
             headers: {
               'Content-Type': 'application/json',
               ...corsHeaders,
@@ -279,7 +306,7 @@ serve(async (req: Request) => {
         )
       }
       
-      if (response.status === 401) {
+      if (openAIResponse.status === 401) {
         console.log('API key invalid')
         return new Response(
           JSON.stringify({ 
@@ -298,11 +325,11 @@ serve(async (req: Request) => {
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to get response from AI service',
+          error: `OpenAI API error: ${openAIResponse.status}`,
           fallback: getIntelligentFallback(currentUserMessage)
         }),
         {
-          status: 200, // Return 200 so frontend uses fallback
+          status: 200,
           headers: {
             'Content-Type': 'application/json',
             ...corsHeaders,
@@ -311,13 +338,13 @@ serve(async (req: Request) => {
       )
     }
 
-    const data = await response.json()
+    const data = await openAIResponse.json()
     console.log('OpenAI API response received successfully')
     
     const aiResponse = data.choices?.[0]?.message?.content
 
-    if (!aiResponse) {
-      console.error('No response generated from OpenAI')
+    if (!aiResponse || typeof aiResponse !== 'string' || !aiResponse.trim()) {
+      console.error('No valid response generated from OpenAI')
       return new Response(
         JSON.stringify({ 
           error: 'No response generated',
@@ -335,7 +362,7 @@ serve(async (req: Request) => {
 
     console.log('Successfully generated AI response')
     return new Response(
-      JSON.stringify({ response: aiResponse }),
+      JSON.stringify({ response: aiResponse.trim() }),
       {
         headers: {
           'Content-Type': 'application/json',
@@ -352,12 +379,13 @@ serve(async (req: Request) => {
       const body = await req.clone().json()
       userMessage = body.userMessage || (body.messages && body.messages.length > 0 ? body.messages[body.messages.length - 1]?.content : '') || ''
     } catch (e) {
-      console.error('Could not parse request body for fallback')
+      console.error('Could not parse request body for fallback:', e)
     }
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
+        details: error.message,
         fallback: getIntelligentFallback(userMessage)
       }),
       {

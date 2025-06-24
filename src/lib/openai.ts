@@ -57,29 +57,54 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     // Get the latest user message
     const userMessage = messages[messages.length - 1]?.content || ''
     
-    // Call the Supabase Edge Function with enhanced error handling
+    if (!userMessage.trim()) {
+      throw new Error('No user message provided')
+    }
+
+    // Prepare the request body
+    const requestBody = {
+      userMessage: userMessage.trim(),
+      messages: messages.slice(-8).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    }
+
+    console.log('Sending request to Edge Function:', {
+      userMessageLength: userMessage.length,
+      messagesCount: requestBody.messages.length
+    })
+
+    // Call the Supabase Edge Function with proper error handling
     const { data, error } = await supabase.functions.invoke('chat-completion', {
-      body: {
-        userMessage,
-        messages: messages.slice(-8) // Send last 8 messages for context
-      },
+      body: requestBody,
       headers: {
         'Content-Type': 'application/json',
       }
     })
 
+    console.log('Edge Function response:', { data, error })
+
     if (error) {
       console.error('Supabase Edge Function error:', error)
       
       // Check if it's a network/connectivity error
-      if (error.message?.includes('Failed to send a request')) {
+      if (error.message?.includes('Failed to send a request') || 
+          error.message?.includes('fetch')) {
         console.log('Network connectivity issue, using local fallback')
         return getIntelligentFallback(userMessage)
+      }
+      
+      // Check if it's a function error with fallback
+      if (error.context?.body?.fallback) {
+        console.log('Using fallback from Edge Function error response')
+        return error.context.body.fallback
       }
       
       return getIntelligentFallback(userMessage)
     }
 
+    // Handle successful response
     if (data?.fallback) {
       console.log('Using fallback response from Edge Function')
       return data.fallback
@@ -90,7 +115,9 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
       return data.response
     }
 
-    throw new Error('No response received from Edge Function')
+    // If we get here, something unexpected happened
+    console.warn('Unexpected response format from Edge Function:', data)
+    return getIntelligentFallback(userMessage)
 
   } catch (error: any) {
     console.error('Error calling Supabase Edge Function:', error)
