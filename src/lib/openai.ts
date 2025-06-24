@@ -64,7 +64,7 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     // Prepare the request body with proper structure
     const requestBody = {
       userMessage: userMessage.trim(),
-      messages: messages.slice(-8).map(msg => ({
+      messages: messages.slice(-6).map(msg => ({
         role: msg.role,
         content: msg.content
       }))
@@ -177,6 +177,26 @@ Consider reaching out to:
 
 Taking care of your emotional well-being is important for both you and your baby. You're being the best parent you can be in an incredibly difficult situation.`
   }
+
+  if (message.includes('support') || message.includes('help') || message.includes('need')) {
+    return `I'm here for you and I hear you. It's completely understandable to feel overwhelmed and in need of support during this challenging time. The NICU journey is one of the most difficult experiences a family can face, and reaching out for help shows incredible strength.
+
+While I'm having some technical difficulties right now, I want you to know that:
+
+• Your feelings are completely valid and normal
+• You're not alone in this journey - many families have walked this path
+• Asking for support is a sign of strength, not weakness
+• There are many resources available to help you through this
+
+Please consider reaching out to:
+- Your baby's medical team for any medical concerns
+- The hospital's social worker or family support coordinator
+- NICU parent support groups (many hospitals offer these)
+- A counselor who specializes in medical trauma or NICU experiences
+- Trusted family and friends who can provide emotional support
+
+Remember, taking care of yourself is also taking care of your baby. You're doing an amazing job in an incredibly difficult situation, and your baby is lucky to have such a caring parent by their side.`
+  }
   
   // Default fallback
   return `I'm experiencing technical difficulties right now, but I want you to know that your concerns are valid and important. The NICU journey is incredibly challenging, and it's completely normal to feel overwhelmed.
@@ -211,6 +231,9 @@ function generateLocalTitle(message: string): string {
   }
   if (lowerMessage.includes('scared') || lowerMessage.includes('worried')) {
     return 'Emotional Support'
+  }
+  if (lowerMessage.includes('support') || lowerMessage.includes('help') || lowerMessage.includes('need')) {
+    return 'Support Request'
   }
   if (lowerMessage.includes('home') || lowerMessage.includes('discharge')) {
     return 'Going Home'

@@ -81,6 +81,7 @@ export default function Dashboard() {
         return
       }
 
+      console.log(`Fetched ${data?.length || 0} messages for conversation ${conversationId}`)
       setMessages(data || [])
     } catch (error) {
       console.error('Error fetching messages:', error)
@@ -140,14 +141,17 @@ export default function Dashboard() {
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation || !user) return
+    if (!newMessage.trim() || !activeConversation || !user || loading) return
 
     setLoading(true)
     const userMessage = newMessage.trim()
     setNewMessage('')
 
     try {
-      // Add user message
+      console.log(`Sending message: "${userMessage}" (${userMessage.length} chars)`)
+      console.log(`Current conversation has ${messages.length} messages`)
+
+      // Add user message to database
       const { data: userMessageData, error: userError } = await supabase
         .from('messages')
         .insert([
@@ -163,10 +167,13 @@ export default function Dashboard() {
       if (userError) {
         console.error('Error sending message:', userError)
         setLoading(false)
+        setNewMessage(userMessage) // Restore the message
         return
       }
 
-      setMessages(prev => [...prev, userMessageData])
+      // Update local state immediately
+      const updatedMessages = [...messages, userMessageData]
+      setMessages(updatedMessages)
 
       // Check if this is the first message and update title if needed
       const currentConversation = conversations.find(c => c.id === activeConversation)
@@ -181,17 +188,20 @@ export default function Dashboard() {
 
       // Generate AI response using Supabase Edge Function
       try {
-        console.log('Generating AI response for message:', userMessage)
+        console.log(`Generating AI response for message: ${userMessage}`)
         
-        // Get conversation history for context
-        const conversationHistory = [...messages, userMessageData].map(msg => ({
+        // Prepare conversation history for context (last 6 messages + current)
+        const contextMessages = updatedMessages.slice(-6).map(msg => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content
         }))
 
-        const aiResponse = await generateChatResponse(conversationHistory)
+        console.log(`Sending ${contextMessages.length} messages for context`)
+        
+        const aiResponse = await generateChatResponse(contextMessages)
         console.log('AI response received:', aiResponse.substring(0, 100) + '...')
         
+        // Save AI response to database
         const { data: aiMessageData, error: aiError } = await supabase
           .from('messages')
           .insert([
@@ -204,8 +214,9 @@ export default function Dashboard() {
           .select()
           .single()
 
-        if (!aiError) {
+        if (!aiError && aiMessageData) {
           setMessages(prev => [...prev, aiMessageData])
+          console.log('AI message saved successfully')
         } else {
           console.error('Error saving AI message:', aiError)
         }
@@ -231,9 +242,10 @@ export default function Dashboard() {
         }
       }
       
-      setLoading(false)
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Error in sendMessage:', error)
+      setNewMessage(userMessage) // Restore the message on error
+    } finally {
       setLoading(false)
     }
   }
@@ -281,6 +293,13 @@ export default function Dashboard() {
   const handleBackToConversations = () => {
     setActiveConversation(null)
     setMessages([])
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
   }
 
   return (
@@ -486,6 +505,13 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
+                
+                {/* Debug info in development */}
+                {import.meta.env.DEV && (
+                  <div className="text-xs text-gray-400">
+                    {messages.length} messages
+                  </div>
+                )}
               </div>
             </div>
 
@@ -541,14 +567,15 @@ export default function Dashboard() {
             {/* Message Input */}
             <div className="bg-white border-t border-gray-200 p-4">
               <div className="flex space-x-3">
-                <input
-                  type="text"
+                <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base"
+                  className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base resize-none"
                   disabled={loading}
+                  rows={1}
+                  style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
                 <button
                   onClick={sendMessage}
