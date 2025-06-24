@@ -52,6 +52,7 @@ export default function Footer() {
             <div className="space-y-2">
               <a href="https://www.mmhla.org/nicu-resources-for-parents" target="_blank" className="block text-gray-400 hover:text-teal-400 transition-colors">Support Groups</a>
               <a href="https://nicuconnections.com/wp-content/uploads/2023/12/nicu-family-guide-en.pdf" target="_blank" className="block text-gray-400 hover:text-teal-400 transition-colors">NICU Guide</a>
+              <a href="https://www.marchofdimes.org/" target="_blank" className="block text-gray-400 hover:text-teal-400 transition-colors">Give Back</a>
               <a href="#about" className="block text-gray-400 hover:text-teal-400 transition-colors">FAQ</a>
             </div>
           </div>
