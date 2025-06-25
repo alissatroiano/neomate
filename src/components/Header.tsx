@@ -9,21 +9,19 @@ interface HeaderProps {
 
 export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetStarted }: HeaderProps) {
   return (
-    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img 
-              src="/neomate_logo.png" 
+              src="/favicon.png" 
               alt="Neomate" 
-              className="h-10 w-10"
+              className="h-12 w-12"
             />
             <div className="flex flex-col">
-              <span className="text-2xl font-script text-teal-600">Neomate</span>
-              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
-                Neonatal AI Assistant
-              </span>
+              <span className="text-4xl font-script text-teal-600">Neomate</span>
+            
             </div>
           </div>
 

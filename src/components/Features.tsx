@@ -27,7 +27,7 @@ const features = [
     color: 'bg-cyan-600'
   },
   {
-    icon: () => <img src="/neomate_logo.png" alt="Heart" className="h-6 w-6" />,
+    icon: () => <img src="/support.png" alt="Heart" className="h-6 w-6" />,
     title: 'Emotional Wellness',
     description: 'Tools and techniques to help manage stress, anxiety, and emotional challenges during hospitalization.',
     color: 'bg-gradient-to-r from-teal-500 to-cyan-500'

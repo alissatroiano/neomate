@@ -1,16 +1,16 @@
 import React from 'react';
-import { Award, Users, Stethoscope } from 'lucide-react';
+import { Award, Users, Stethoscope, Timer } from 'lucide-react';
 
 const stats = [
   { number: '10,000+', label: 'Families Supported', icon: Users },
-  { number: '24/7', label: 'Available Support', icon: () => <img src="/neomate_logo.png" alt="Heart" className="h-6 w-6" /> },
+  { number: '24/7', label: 'Available Support', icon: Timer},
   { number: '95%', label: 'Satisfaction Rate', icon: Award },
   { number: '50+', label: 'Medical Experts', icon: Stethoscope }
 ];
 
 export default function About() {
   return (
-    <section id="about" className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
+    <section id="about" className="py-20 bg-gradient-to-br from-teal-100 to-cyan-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Content */}
@@ -23,16 +23,14 @@ export default function About() {
                 </span>
               </h2>
               <p className="text-xl text-gray-600 leading-relaxed">
-                Neomate was created by a team of neonatologists, pediatric nurses, 
-                and mental health professionals who understand the unique challenges 
-                faced by families during neonatal hospitalization.
+                Neomate AI assistant provides guidance, advice, and resources for families during neonatal hospitalization. Neomate's advanced AI technology is designed to be a compassionate companion, offering personalized support and evidence-based information tailored to the unique needs of each family.
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-r from-teal-500 to-cyan-600 p-2 rounded-lg flex-shrink-0">
-                  <img src="/neomate_logo.png" alt="Heart" className="h-5 w-5" />
+                <div className="bg-gradient-to-r from-cyan-500 to-teal-600 p-2 rounded-lg flex-shrink-0">
+                  <img src="/support.png" alt="logo" className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Empathetic Technology</h3>

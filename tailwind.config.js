@@ -4,7 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'script': ['Dancing Script', 'cursive'],
+        'script': ['reenie-beanie', 'sans-serif'],
+        'sans': ['futura-pt', 'sans-serif'],
       },
       colors: {
         teal: {
