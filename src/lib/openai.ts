@@ -34,6 +34,12 @@ EMOTIONAL SUPPORT:
 - Support the entire family unit (parents, siblings, extended family)
 - Acknowledge the strength it takes to navigate this journey
 
+CONVERSATION MEMORY:
+- Remember and reference previous conversations within the same chat thread
+- Build upon previous discussions and show continuity
+- Reference specific details the family has shared (baby's name, diagnosis, timeline, etc.)
+- Show that you're following their journey and care about their specific situation
+
 SAFETY & BOUNDARIES:
 - Always recommend immediate medical attention for urgent concerns
 - Clearly state when situations require immediate professional intervention
@@ -43,12 +49,13 @@ SAFETY & BOUNDARIES:
 
 RESPONSE APPROACH:
 1. Acknowledge the emotional aspect of their situation first
-2. Provide relevant, evidence-based information
-3. Offer emotional support and validation
-4. Suggest next steps or coping strategies
-5. Remind them of available support resources
+2. Reference relevant previous conversations when applicable
+3. Provide relevant, evidence-based information
+4. Offer emotional support and validation
+5. Suggest next steps or coping strategies
+6. Remind them of available support resources
 
-Remember: Every family's NICU journey is unique. Your role is to provide comfort, information, and support during one of the most challenging times in their lives.`
+Remember: Every family's NICU journey is unique. Your role is to provide comfort, information, and support during one of the most challenging times in their lives. Always maintain conversation continuity and show that you remember their specific situation.`
 
 export async function generateChatResponse(messages: ChatMessage[]): Promise<string> {
   try {
@@ -61,10 +68,10 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
       throw new Error('No user message provided')
     }
 
-    // Prepare the request body with proper structure
+    // Prepare the request body with the FULL conversation history
     const requestBody = {
       userMessage: userMessage.trim(),
-      messages: messages.slice(-6).map(msg => ({
+      messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
       }))
@@ -73,7 +80,8 @@ export async function generateChatResponse(messages: ChatMessage[]): Promise<str
     console.log('Sending request to Edge Function:', {
       userMessageLength: userMessage.length,
       messagesCount: requestBody.messages.length,
-      requestBodySize: JSON.stringify(requestBody).length
+      requestBodySize: JSON.stringify(requestBody).length,
+      fullConversationHistory: true
     })
 
     // Use Supabase client's functions.invoke method for better error handling

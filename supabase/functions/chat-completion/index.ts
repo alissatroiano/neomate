@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 /*
-  # ChatGPT Integration Function with Enhanced Error Handling
+  # ChatGPT Integration Function with Enhanced Error Handling and Memory
 
   1. Purpose
     - Provides secure ChatGPT integration for text conversations
+    - Maintains conversation memory within chat threads
     - Handles rate limiting and quota issues gracefully
     - Provides intelligent fallbacks for common NICU concerns
 
@@ -14,7 +15,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
     - CORS headers configured for frontend access
 
   3. Features
-    - NICU-specialized system prompt
+    - NICU-specialized system prompt with memory instructions
+    - Full conversation history context
     - Rate limiting detection and handling
     - Intelligent fallback responses
     - Enhanced error handling and logging
@@ -39,6 +41,9 @@ Your role is to:
 - Support parents through the emotional challenges of NICU hospitalization
 - Encourage communication with medical teams when needed
 - Provide coping strategies for stress, anxiety, and difficult emotions
+- REMEMBER and reference previous conversations within the same chat thread
+- Show continuity and build upon previous discussions
+- Reference specific details families have shared (baby's name, diagnosis, timeline, etc.)
 
 Guidelines:
 - Always be compassionate and understanding
@@ -49,8 +54,12 @@ Guidelines:
 - Use clear, accessible language
 - Be sensitive to the stress and trauma families may be experiencing
 - Provide hope while being realistic about challenges
+- MAINTAIN CONVERSATION MEMORY - reference previous messages in the same conversation
+- Show that you remember their specific situation and care about their journey
 
-Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey.`
+CRITICAL: You have access to the full conversation history. Use this to provide personalized, contextual responses that show you remember what the family has shared with you. If they mention their baby's diagnosis in one message, remember it in subsequent messages. If they share their baby's name, use it. Show genuine care and continuity.
+
+Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey who remembers and cares about their specific situation.`
 
 // Intelligent fallback responses for common NICU concerns
 const getIntelligentFallback = (userMessage: string): string => {
@@ -218,6 +227,7 @@ serve(async (req: Request) => {
 
     console.log('User message found:', !!currentUserMessage)
     console.log('User message length:', currentUserMessage ? currentUserMessage.length : 0)
+    console.log('Total messages in conversation:', messages ? messages.length : 0)
 
     if (!currentUserMessage || typeof currentUserMessage !== 'string' || !currentUserMessage.trim()) {
       console.error('No valid user message found in request')
@@ -238,7 +248,7 @@ serve(async (req: Request) => {
       )
     }
 
-    // Prepare conversation context
+    // Prepare conversation context with FULL history for memory
     const conversationMessages = [
       {
         role: "system",
@@ -246,15 +256,15 @@ serve(async (req: Request) => {
       }
     ]
 
-    // Add recent conversation history (last 6 messages for context)
+    // Add ALL conversation history (not just last 6) for proper memory
     if (messages && Array.isArray(messages) && messages.length > 0) {
-      const recentMessages = messages.slice(-6).map((msg: any) => ({
+      const allMessages = messages.map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
         content: msg.content || ''
       })).filter(msg => msg.content.trim())
       
-      conversationMessages.push(...recentMessages)
-      console.log(`Added ${recentMessages.length} context messages`)
+      conversationMessages.push(...allMessages)
+      console.log(`Added ${allMessages.length} messages for FULL conversation context`)
     }
 
     // Ensure we have the current user message
@@ -265,7 +275,8 @@ serve(async (req: Request) => {
       })
     }
 
-    console.log(`Making OpenAI API request with ${conversationMessages.length} messages`)
+    console.log(`Making OpenAI API request with ${conversationMessages.length} messages (including system prompt)`)
+    console.log('Conversation context includes full history for memory:', conversationMessages.length > 2)
 
     // Make request to OpenAI API with enhanced error handling
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -277,7 +288,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: conversationMessages,
-        max_tokens: 400,
+        max_tokens: 500,
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
@@ -362,7 +373,7 @@ serve(async (req: Request) => {
       )
     }
 
-    console.log('Successfully generated AI response')
+    console.log('Successfully generated AI response with conversation memory')
     return new Response(
       JSON.stringify({ response: aiResponse.trim() }),
       {
