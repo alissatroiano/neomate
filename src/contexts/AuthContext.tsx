@@ -31,6 +31,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true
+    let timeoutId: NodeJS.Timeout
+
+    // Set a maximum loading time to prevent infinite loading
+    const maxLoadingTime = 10000 // 10 seconds
+    timeoutId = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth loading timeout reached, setting loading to false')
+        setLoading(false)
+      }
+    }, maxLoadingTime)
 
     // Get initial session
     const getInitialSession = async () => {
@@ -72,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } finally {
         if (mounted) {
+          clearTimeout(timeoutId)
           setLoading(false)
         }
       }
@@ -96,11 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null)
       }
       
+      clearTimeout(timeoutId)
       setLoading(false)
     })
 
     return () => {
       mounted = false
+      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
@@ -116,6 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error)
+        // If profile doesn't exist, that's okay - user might be newly created
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, user might be newly created')
+        }
         return
       }
 

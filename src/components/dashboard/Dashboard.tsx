@@ -16,7 +16,8 @@ import {
   ArrowLeft,
   Edit2,
   Check,
-  XIcon
+  XIcon,
+  RefreshCw
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [editTitle, setEditTitle] = useState('')
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [conversationLoading, setConversationLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   // Check if Supabase is properly configured
   const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && 
@@ -40,11 +42,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setConnectionError('Supabase is not properly configured. Please check your environment variables.')
+      setInitialLoading(false)
       return
     }
 
     if (user) {
       fetchConversations()
+    } else {
+      setInitialLoading(false)
     }
   }, [user, isSupabaseConfigured])
 
@@ -60,6 +65,7 @@ export default function Dashboard() {
     try {
       console.log('Fetching conversations for user:', user?.id)
       setConversationLoading(true)
+      setConnectionError(null)
       
       const { data, error } = await supabase
         .from('conversations')
@@ -93,6 +99,7 @@ export default function Dashboard() {
       setConnectionError('Failed to connect to the database.')
     } finally {
       setConversationLoading(false)
+      setInitialLoading(false)
     }
   }
 
@@ -100,6 +107,7 @@ export default function Dashboard() {
     try {
       console.log('Fetching messages for conversation:', conversationId)
       setLoading(true)
+      setConnectionError(null)
       
       const { data, error } = await supabase
         .from('messages')
@@ -136,6 +144,8 @@ export default function Dashboard() {
 
     try {
       console.log('Creating new conversation for user:', user.id)
+      setConnectionError(null)
+      
       const { data, error } = await supabase
         .from('conversations')
         .insert([
@@ -367,6 +377,15 @@ export default function Dashboard() {
     }
   }
 
+  const handleRefresh = () => {
+    console.log('Refreshing conversations and messages')
+    setConnectionError(null)
+    fetchConversations()
+    if (activeConversation) {
+      fetchMessages(activeConversation)
+    }
+  }
+
   // Show connection error if Supabase is not configured
   if (!isSupabaseConfigured) {
     return (
@@ -386,6 +405,38 @@ export default function Dashboard() {
     )
   }
 
+  // Show initial loading state
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img 
+              src="/neomate_logo.png" 
+              alt="Neomate" 
+              className="h-10 w-10"
+            />
+            <div className="flex flex-col">
+              <span className="text-3xl font-script text-teal-600">Neomate</span>
+              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                Neonatal AI Assistant
+              </span>
+            </div>
+          </div>
+          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+          <button 
+            onClick={handleRefresh}
+            className="text-teal-600 hover:text-teal-700 text-sm flex items-center space-x-1 mx-auto"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen bg-gray-50 flex relative">
       {/* Mobile Overlay */}
@@ -398,8 +449,15 @@ export default function Dashboard() {
 
       {/* Connection Error Banner */}
       {connectionError && (
-        <div className="fixed top-0 left-0 right-0 bg-red-500 text-white px-4 py-2 text-center text-sm z-50">
-          {connectionError}
+        <div className="fixed top-0 left-0 right-0 bg-red-500 text-white px-4 py-2 text-center text-sm z-50 flex items-center justify-center space-x-2">
+          <span>{connectionError}</span>
+          <button 
+            onClick={handleRefresh}
+            className="text-red-200 hover:text-white flex items-center space-x-1"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Retry</span>
+          </button>
           <button 
             onClick={() => setConnectionError(null)}
             className="ml-2 text-red-200 hover:text-white"
@@ -434,6 +492,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={handleRefresh}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </button>
               <button
                 onClick={signOut}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

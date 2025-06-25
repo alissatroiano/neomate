@@ -28,6 +28,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           </div>
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-gray-600">Loading your account...</p>
+          <p className="text-sm text-gray-500">If this takes too long, please refresh the page</p>
         </div>
       </div>
     )
