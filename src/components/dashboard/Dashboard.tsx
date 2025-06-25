@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [editingTitle, setEditingTitle] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [conversationLoading, setConversationLoading] = useState(false)
 
   // Check if Supabase is properly configured
   const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && 
@@ -58,6 +59,8 @@ export default function Dashboard() {
   const fetchConversations = async () => {
     try {
       console.log('Fetching conversations for user:', user?.id)
+      setConversationLoading(true)
+      
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
@@ -65,26 +68,39 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Error fetching conversations:', error)
-        setConnectionError('Failed to load conversations. Please check your connection.')
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        setConnectionError(`Failed to load conversations: ${error.message}`)
         return
       }
 
-      console.log(`Fetched ${data?.length || 0} conversations`)
+      console.log(`Successfully fetched ${data?.length || 0} conversations`)
+      console.log('Conversations data:', data)
       setConversations(data || [])
       setConnectionError(null)
       
+      // Only auto-select first conversation if no conversation is currently active
       if (data && data.length > 0 && !activeConversation) {
+        console.log('Auto-selecting first conversation:', data[0].id)
         setActiveConversation(data[0].id)
       }
     } catch (error) {
-      console.error('Error fetching conversations:', error)
+      console.error('Exception while fetching conversations:', error)
       setConnectionError('Failed to connect to the database.')
+    } finally {
+      setConversationLoading(false)
     }
   }
 
   const fetchMessages = async (conversationId: string) => {
     try {
       console.log('Fetching messages for conversation:', conversationId)
+      setLoading(true)
+      
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -93,16 +109,25 @@ export default function Dashboard() {
 
       if (error) {
         console.error('Error fetching messages:', error)
-        setConnectionError('Failed to load messages.')
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        setConnectionError(`Failed to load messages: ${error.message}`)
         return
       }
 
-      console.log(`Fetched ${data?.length || 0} messages for conversation ${conversationId}`)
+      console.log(`Successfully fetched ${data?.length || 0} messages for conversation ${conversationId}`)
+      console.log('Messages data:', data)
       setMessages(data || [])
       setConnectionError(null)
     } catch (error) {
-      console.error('Error fetching messages:', error)
+      console.error('Exception while fetching messages:', error)
       setConnectionError('Failed to load conversation.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -329,6 +354,19 @@ export default function Dashboard() {
     }
   }
 
+  const handleConversationClick = (conversationId: string) => {
+    console.log('Conversation clicked:', conversationId)
+    console.log('Current active conversation:', activeConversation)
+    
+    if (conversationId !== activeConversation) {
+      console.log('Switching to conversation:', conversationId)
+      setActiveConversation(conversationId)
+    } else {
+      console.log('Same conversation clicked, refreshing messages')
+      fetchMessages(conversationId)
+    }
+  }
+
   // Show connection error if Supabase is not configured
   if (!isSupabaseConfigured) {
     return (
@@ -440,83 +478,96 @@ export default function Dashboard() {
 
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.id}
-              className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group ${
-                activeConversation === conversation.id ? 'bg-teal-50 border-teal-200' : ''
-              }`}
-              onClick={() => setActiveConversation(conversation.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  {editingTitle === conversation.id ? (
-                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSaveTitle(conversation.id)
-                          } else if (e.key === 'Escape') {
-                            handleCancelEdit()
-                          }
-                        }}
-                        autoFocus
-                      />
+          {conversationLoading ? (
+            <div className="p-4 text-center">
+              <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-gray-500">Loading conversations...</p>
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="p-4 text-center">
+              <MessageCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No conversations yet</p>
+              <p className="text-xs text-gray-400 mt-1">Start a new chat to begin</p>
+            </div>
+          ) : (
+            conversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors group ${
+                  activeConversation === conversation.id ? 'bg-teal-50 border-teal-200' : ''
+                }`}
+                onClick={() => handleConversationClick(conversation.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    {editingTitle === conversation.id ? (
+                      <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="flex-1 text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSaveTitle(conversation.id)
+                            } else if (e.key === 'Escape') {
+                              handleCancelEdit()
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleSaveTitle(conversation.id)}
+                          className="p-1 text-green-600 hover:text-green-700"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="p-1 text-gray-400 hover:text-gray-600"
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {conversation.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(conversation.updated_at).toLocaleDateString()}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  {editingTitle !== conversation.id && (
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => handleSaveTitle(conversation.id)}
-                        className="p-1 text-green-600 hover:text-green-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditTitle(conversation.id, conversation.title)
+                        }}
+                        className="p-1 text-gray-400 hover:text-teal-500 transition-colors"
+                        title="Edit title"
                       >
-                        <Check className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={handleCancelEdit}
-                        className="p-1 text-gray-400 hover:text-gray-600"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteConversation(conversation.id)
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete conversation"
                       >
-                        <XIcon className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {conversation.title}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(conversation.updated_at).toLocaleDateString()}
-                      </p>
-                    </>
                   )}
                 </div>
-                {editingTitle !== conversation.id && (
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEditTitle(conversation.id, conversation.title)
-                      }}
-                      className="p-1 text-gray-400 hover:text-teal-500 transition-colors"
-                      title="Edit title"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        deleteConversation(conversation.id)
-                      }}
-                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                      title="Delete conversation"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -559,7 +610,7 @@ export default function Dashboard() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 && (
+              {messages.length === 0 && !loading && (
                 <div className="text-center py-8 sm:py-12">
                   <div className="bg-teal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                     <MessageCircle className="h-8 w-8 text-teal-600" />
@@ -568,6 +619,13 @@ export default function Dashboard() {
                   <p className="text-gray-500 mb-4 px-4">
                     Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information.
                   </p>
+                </div>
+              )}
+
+              {loading && messages.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-gray-500">Loading conversation...</p>
                 </div>
               )}
 
@@ -593,7 +651,7 @@ export default function Dashboard() {
                 </div>
               ))}
 
-              {loading && (
+              {loading && messages.length > 0 && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 max-w-xs">
                     <div className="flex items-center space-x-2">
