@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 /*
@@ -21,15 +20,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
     - Enhanced error handling and logging
 */
 
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
+  "Access-Control-Max-Age": "86400",
 }
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
-console.log('OpenAI API Key:', !!OPENAI_API_KEY);
+console.log('OpenAI API Key configured:', !!OPENAI_API_KEY);
 
 const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
 
@@ -271,8 +270,8 @@ serve(async (req: Request) => {
     // Make request to OpenAI API with enhanced error handling
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-         headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

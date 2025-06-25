@@ -11,10 +11,23 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img 
+              src="/neomate_logo.png" 
+              alt="Neomate" 
+              className="h-10 w-10"
+            />
+            <div className="flex flex-col">
+              <span className="text-3xl font-script text-teal-600">Neomate</span>
+              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                Neonatal AI Assistant
+              </span>
+            </div>
+          </div>
+          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600">Loading your account...</p>
         </div>
       </div>
     )
