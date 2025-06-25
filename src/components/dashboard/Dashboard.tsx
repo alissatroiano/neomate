@@ -215,13 +215,13 @@ export default function Dashboard() {
       try {
         console.log(`Generating AI response for message: ${userMessage}`)
         
-        // Prepare conversation history for context (last 6 messages + current)
-        const contextMessages = updatedMessages.slice(-6).map(msg => ({
+        // Prepare conversation history for context - use ALL messages, not just last 6
+        const contextMessages = updatedMessages.map(msg => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content
         }))
 
-        console.log(`Sending ${contextMessages.length} messages for context`)
+        console.log(`Sending ${contextMessages.length} messages for context (FULL conversation history)`)
         
         const aiResponse = await generateChatResponse(contextMessages)
         console.log('AI response received:', aiResponse.substring(0, 100) + '...')
