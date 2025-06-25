@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { supabase, Conversation, Message } from '../../lib/supabase'
 import { generateChatResponse, generateConversationTitle } from '../../lib/openai'
 import { 
@@ -17,11 +18,13 @@ import {
   Edit2,
   Check,
   XIcon,
-  RefreshCw
+  RefreshCw,
+  Home
 } from 'lucide-react'
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth()
+  const navigate = useNavigate()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversation, setActiveConversation] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -60,6 +63,10 @@ export default function Dashboard() {
       setIsSidebarOpen(false)
     }
   }, [activeConversation])
+
+  const handleBackToLanding = () => {
+    navigate('/')
+  }
 
   const fetchConversations = async () => {
     try {
@@ -389,18 +396,62 @@ export default function Dashboard() {
   // Show connection error if Supabase is not configured
   if (!isSupabaseConfigured) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex flex-col">
+        {/* Header */}
+        <header className="bg-white/95 backdrop-blur-sm shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <button 
+                onClick={handleBackToLanding}
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+              >
+                <img 
+                  src="/neomate_logo.png" 
+                  alt="Neomate" 
+                  className="h-10 w-10"
+                />
+                <div className="flex flex-col">
+                  <span className="text-2xl font-script text-teal-600">Neomate</span>
+                  <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                    Neonatal AI Assistant
+                  </span>
+                </div>
+              </button>
+              
+              <button
+                onClick={handleBackToLanding}
+                className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors"
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </button>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Required</h2>
-            <p className="text-gray-600">
-              Supabase environment variables are not properly configured. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.
-            </p>
+        </header>
+
+        {/* Error Content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Required</h2>
+              <p className="text-gray-600">
+                Supabase environment variables are not properly configured. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center text-sm text-gray-500">
+              <p>© 2024 Neomate. All rights reserved. HIPAA compliant and secure.</p>
+            </div>
+          </div>
+        </footer>
       </div>
     )
   }
@@ -408,31 +459,62 @@ export default function Dashboard() {
   // Show initial loading state
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <img 
-              src="/neomate_logo.png" 
-              alt="Neomate" 
-              className="h-10 w-10"
-            />
-            <div className="flex flex-col">
-              <span className="text-3xl font-script text-teal-600">Neomate</span>
-              <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
-                Neonatal AI Assistant
-              </span>
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50 flex flex-col">
+        {/* Header */}
+        <header className="bg-white/95 backdrop-blur-sm shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <button 
+                onClick={handleBackToLanding}
+                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+              >
+                <img 
+                  src="/neomate_logo.png" 
+                  alt="Neomate" 
+                  className="h-10 w-10"
+                />
+                <div className="flex flex-col">
+                  <span className="text-2xl font-script text-teal-600">Neomate</span>
+                  <span className="text-xs text-teal-500 uppercase tracking-wider font-light -mt-1">
+                    Neonatal AI Assistant
+                  </span>
+                </div>
+              </button>
+              
+              <button
+                onClick={handleBackToLanding}
+                className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors"
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </button>
             </div>
           </div>
-          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
-          <button 
-            onClick={handleRefresh}
-            className="text-teal-600 hover:text-teal-700 text-sm flex items-center space-x-1 mx-auto"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
-          </button>
+        </header>
+
+        {/* Loading Content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-gray-600">Loading your dashboard...</p>
+            <button 
+              onClick={handleRefresh}
+              className="text-teal-600 hover:text-teal-700 text-sm flex items-center space-x-1 mx-auto"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center text-sm text-gray-500">
+              <p>© 2024 Neomate. All rights reserved. HIPAA compliant and secure.</p>
+            </div>
+          </div>
+        </footer>
       </div>
     )
   }
@@ -478,7 +560,10 @@ export default function Dashboard() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
+            <button 
+              onClick={handleBackToLanding}
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+            >
               <img 
                 src="/neomate_logo.png" 
                 alt="Neomate" 
@@ -490,8 +575,15 @@ export default function Dashboard() {
                   Neonatal AI Assistant
                 </span>
               </div>
-            </div>
+            </button>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={handleBackToLanding}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Home"
+              >
+                <Home className="h-5 w-5" />
+              </button>
               <button
                 onClick={handleRefresh}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
