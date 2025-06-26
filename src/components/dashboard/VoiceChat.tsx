@@ -15,9 +15,10 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
   const [connectionStatus, setConnectionStatus] = useState<string>('Ready to connect')
   
   const websocketRef = useRef<WebSocket | null>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -56,7 +57,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
       
       setConnectionStatus('Requesting microphone access...')
       
-      // Request microphone access with better error handling
+      // Request microphone access with specific constraints for ElevenLabs
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
@@ -64,7 +65,8 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
-            sampleRate: 16000
+            sampleRate: 16000,
+            channelCount: 1
           } 
         })
       } catch (micError: any) {
@@ -83,9 +85,14 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
 
       setConnectionStatus('Connecting to voice service...')
 
-      // Initialize audio context
+      // Initialize audio context with 16kHz sample rate for ElevenLabs
       try {
         audioContextRef.current = new AudioContext({ sampleRate: 16000 })
+        
+        // Resume audio context if it's suspended
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
       } catch (audioError: any) {
         console.error('Audio context error:', audioError)
         throw new Error('Failed to initialize audio: ' + audioError.message)
@@ -102,7 +109,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
         setIsConnected(true)
         setIsConnecting(false)
         setConnectionStatus('Connected - Voice chat active')
-        startRecording()
+        startAudioProcessing()
       }
 
       ws.onmessage = (event) => {
@@ -144,7 +151,9 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
         console.log('WebSocket connection closed:', event.code, event.reason)
         setIsConnected(false)
         setConnectionStatus('Disconnected')
-        if (event.code !== 1000) { // Not a normal closure
+        if (event.code === 1008) {
+          setError('Audio format error - please try again')
+        } else if (event.code !== 1000) {
           setError(`Connection closed unexpectedly (Code: ${event.code})`)
         }
         cleanup()
@@ -169,49 +178,55 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
     }
   }
 
-  const startRecording = () => {
-    if (!streamRef.current) {
-      console.error('No stream available for recording')
+  const startAudioProcessing = () => {
+    if (!streamRef.current || !audioContextRef.current) {
+      console.error('No stream or audio context available for processing')
       return
     }
 
     try {
-      // Check if MediaRecorder supports the preferred format
-      let mimeType = 'audio/webm;codecs=opus'
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm'
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'audio/mp4'
-          if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = '' // Let browser choose
-          }
+      console.log('Starting audio processing for ElevenLabs PCM format')
+
+      // Create audio source from microphone stream
+      const source = audioContextRef.current.createMediaStreamSource(streamRef.current)
+      sourceRef.current = source
+
+      // Create script processor for real-time audio processing
+      // Use 4096 buffer size for better performance
+      const processor = audioContextRef.current.createScriptProcessor(4096, 1, 1)
+      processorRef.current = processor
+
+      processor.onaudioprocess = (event) => {
+        if (!websocketRef.current || websocketRef.current.readyState !== WebSocket.OPEN || isMuted) {
+          return
+        }
+
+        const inputBuffer = event.inputBuffer
+        const inputData = inputBuffer.getChannelData(0) // Get mono channel
+
+        // Convert Float32Array to Int16Array (PCM 16-bit)
+        const pcmData = new Int16Array(inputData.length)
+        for (let i = 0; i < inputData.length; i++) {
+          // Convert from [-1, 1] to [-32768, 32767]
+          const sample = Math.max(-1, Math.min(1, inputData[i]))
+          pcmData[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF
+        }
+
+        // Send PCM data as binary
+        if (pcmData.length > 0) {
+          console.log('Sending PCM audio data:', pcmData.length, 'samples')
+          websocketRef.current.send(pcmData.buffer)
         }
       }
 
-      console.log('Starting recording with MIME type:', mimeType || 'default')
+      // Connect the audio processing chain
+      source.connect(processor)
+      processor.connect(audioContextRef.current.destination)
 
-      const mediaRecorder = new MediaRecorder(streamRef.current, 
-        mimeType ? { mimeType } : undefined
-      )
-      mediaRecorderRef.current = mediaRecorder
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0 && websocketRef.current?.readyState === WebSocket.OPEN && !isMuted) {
-          console.log('Sending audio data:', event.data.size, 'bytes')
-          websocketRef.current.send(event.data)
-        }
-      }
-
-      mediaRecorder.onerror = (event: any) => {
-        console.error('MediaRecorder error:', event)
-        setError('Recording error occurred: ' + (event.error?.message || 'Unknown error'))
-      }
-
-      mediaRecorder.start(250) // Send data every 250ms
-      console.log('Started recording audio')
+      console.log('Audio processing started - sending PCM data to ElevenLabs')
     } catch (error: any) {
-      console.error('Error starting recording:', error)
-      setError('Failed to start recording: ' + error.message)
+      console.error('Error starting audio processing:', error)
+      setError('Failed to start audio processing: ' + error.message)
     }
   }
 
@@ -262,11 +277,20 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
   const cleanup = () => {
     console.log('Cleaning up voice chat resources')
     
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    // Disconnect audio processing chain
+    if (processorRef.current) {
       try {
-        mediaRecorderRef.current.stop()
+        processorRef.current.disconnect()
       } catch (e) {
-        console.log('Error stopping media recorder:', e)
+        console.log('Error disconnecting processor:', e)
+      }
+    }
+    
+    if (sourceRef.current) {
+      try {
+        sourceRef.current.disconnect()
+      } catch (e) {
+        console.log('Error disconnecting source:', e)
       }
     }
     
@@ -297,7 +321,8 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
     }
 
     // Reset refs
-    mediaRecorderRef.current = null
+    processorRef.current = null
+    sourceRef.current = null
     websocketRef.current = null
     streamRef.current = null
     audioContextRef.current = null
