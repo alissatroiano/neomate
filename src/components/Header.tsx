@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetStarted }: HeaderProps) {
   return (
-    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
+    <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-lg border-b border-warm-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
@@ -17,23 +17,22 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
             <img 
               src="/favicon.png" 
               alt="Neomate" 
-              className="h-12 w-12"
+              className="h-12 w-12 rounded-full shadow-sm"
             />
             <div className="flex flex-col">
-              <span className="text-4xl font-script text-teal-600">Neomate</span>
-            
+              <span className="text-4xl font-script text-warm-700">Neomate</span>
             </div>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Features</a>
-            <a href="#about" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">About</a>
-            <a href="#testimonials" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Stories</a>
-            <a href="#contact" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Contact</a>
+            <a href="#features" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Features</a>
+            <a href="#about" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">About</a>
+            <a href="#testimonials" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Stories</a>
+            <a href="#contact" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Contact</a>
             <button 
               onClick={onGetStarted}
-              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-warm-500 to-primary-600 text-white px-6 py-2 rounded-lg hover:from-warm-600 hover:to-primary-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
             >
               Get Started
             </button>
@@ -77,9 +76,9 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? (
-                <X className="h-6 w-6 text-gray-700" />
+                <X className="h-6 w-6 text-warm-700" />
               ) : (
-                <Menu className="h-6 w-6 text-gray-700" />
+                <Menu className="h-6 w-6 text-warm-700" />
               )}
             </button>
           </div>
@@ -87,15 +86,15 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen, onGetSta
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-warm-200">
             <nav className="flex flex-col space-y-4">
-              <a href="#features" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Features</a>
-              <a href="#about" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">About</a>
-              <a href="#testimonials" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Stories</a>
-              <a href="#contact" className="text-gray-700 hover:text-teal-600 transition-colors font-medium">Contact</a>
+              <a href="#features" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Features</a>
+              <a href="#about" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">About</a>
+              <a href="#testimonials" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Stories</a>
+              <a href="#contact" className="text-warm-700 hover:text-primary-600 transition-colors font-medium">Contact</a>
               <button 
                 onClick={onGetStarted}
-                className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all duration-300 w-full font-medium"
+                className="bg-gradient-to-r from-warm-500 to-primary-600 text-white px-6 py-2 rounded-lg hover:from-warm-600 hover:to-primary-700 transition-all duration-300 w-full font-medium"
               >
                 Get Started
               </button>
