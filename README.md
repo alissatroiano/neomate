@@ -1,15 +1,15 @@
 # Neomate - Therapeutic AI Assistant for Neonatal Care
 
-![Neomate Logo](https://via.placeholder.com/200x80/3B82F6/FFFFFF?text=Neomate)
+![Neomate Logo](public/favicon.png)
 
 ## Overview
 
-Neomate is a compassionate AI-powered platform designed to provide therapeutic support and evidence-based information for families navigating neonatal hospitalization. Built with empathy and medical expertise, Neomate offers 24/7 support during one of life's most challenging journeys.
+Neomate is a compassionate AI-powered platform designed to provide therapeutic support and evidence-based information for families navigating neonatal hospitalization. Built with an empathetic and medicaly accurate AI, Neomate offers 24/7 support during one of life's most challenging journeys.
 
 ## Features
 
 ### 🤖 **Compassionate AI Support**
-- Empathetic AI conversations designed by healthcare professionals
+- Empathetic AI conversations trained for healthcare conversations.
 - Emotional support tailored to neonatal care situations
 - Understanding responses to family concerns and questions
 
