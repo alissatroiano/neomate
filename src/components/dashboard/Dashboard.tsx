@@ -5,6 +5,7 @@ import { supabase, Conversation, Message, isSupabaseConfigured } from '../../lib
 import { generateChatResponse, generateConversationTitle } from '../../lib/openai'
 import { isElevenLabsConfigured } from '../../lib/elevenlabs'
 import VoiceChat from './VoiceChat'
+import LocalDevSetup from './LocalDevSetup'
 import { 
   MessageCircle, 
   Plus, 
@@ -22,7 +23,8 @@ import {
   XIcon,
   RefreshCw,
   Home,
-  Mic
+  Mic,
+  Settings
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -40,13 +42,14 @@ export default function Dashboard() {
   const [conversationLoading, setConversationLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
+  const [showDevSetup, setShowDevSetup] = useState(false)
 
   // Check if Supabase is properly configured
   const supabaseConfigured = isSupabaseConfigured()
 
   useEffect(() => {
     if (!supabaseConfigured) {
-      setConnectionError('Supabase is not properly configured. Please set up your database connection.')
+      setConnectionError('Database not configured for local development')
       setInitialLoading(false)
       return
     }
@@ -415,7 +418,12 @@ export default function Dashboard() {
   // Show connection error if Supabase is not configured
   if (!supabaseConfigured) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex flex-col">
+        {/* Local Dev Setup Modal */}
+        {showDevSetup && (
+          <LocalDevSetup onClose={() => setShowDevSetup(false)} />
+        )}
+
         {/* Header */}
         <header className="bg-white/95 backdrop-blur-sm shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -437,36 +445,51 @@ export default function Dashboard() {
                 </div>
               </button>
               
-              <button
-                onClick={handleBackToLanding}
-                className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors"
-              >
-                <Home className="h-4 w-4" />
-                <span>Home</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowDevSetup(true)}
+                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Setup Guide</span>
+                </button>
+                <button
+                  onClick={handleBackToLanding}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </button>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Error Content */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="max-w-lg w-full text-center space-y-6">
+            <div className="bg-blue-100 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Database Setup Required</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Local Development Setup</h2>
               <p className="text-gray-600 mb-4">
-                To use Neomate's chat features, you need to connect to a Supabase database. This stores your conversations securely and privately.
+                To test Neomate locally, you need to configure your environment variables. This connects the app to your database and AI services.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <h3 className="font-semibold text-blue-900 mb-2">Quick Setup:</h3>
-                <ol className="text-sm text-blue-800 space-y-1">
-                  <li>1. Click "Connect to Supabase" in the top right</li>
-                  <li>2. Follow the setup wizard</li>
-                  <li>3. Your conversations will be saved securely</li>
-                </ol>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
+                <h3 className="font-semibold text-blue-900 mb-2">What you need:</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Supabase project (for database)</li>
+                  <li>• OpenAI API key (for AI chat)</li>
+                  <li>• ElevenLabs agent (optional, for voice)</li>
+                </ul>
               </div>
+              <button
+                onClick={() => setShowDevSetup(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+              >
+                Open Setup Guide
+              </button>
             </div>
           </div>
         </div>
@@ -554,6 +577,11 @@ export default function Dashboard() {
         onClose={() => setIsVoiceChatOpen(false)} 
       />
 
+      {/* Local Dev Setup Modal */}
+      {showDevSetup && (
+        <LocalDevSetup onClose={() => setShowDevSetup(false)} />
+      )}
+
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
@@ -610,6 +638,13 @@ export default function Dashboard() {
               </div>
             </button>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowDevSetup(true)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Setup Guide"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
               <button
                 onClick={handleBackToLanding}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
