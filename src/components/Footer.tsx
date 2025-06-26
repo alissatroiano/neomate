@@ -10,9 +10,9 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img 
-                src="/neomate_logo.png" 
+                src="/favicon.png" 
                 alt="Neomate" 
-                className="h-8 w-8"
+                className="h-12 w-12 rounded-full"
               />
               <div className="flex flex-col">
                 <span className="text-2xl font-script text-teal-400">Neomate</span>

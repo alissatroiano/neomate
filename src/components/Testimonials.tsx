@@ -45,7 +45,7 @@ export default function Testimonials() {
               key={index}
               className="bg-gray-50 p-8 rounded-2xl relative group hover:bg-white hover:shadow-xl transition-all duration-300"
             >
-              <Quote className="h-8 w-8 text-blue-600 mb-6 group-hover:scale-110 transition-transform duration-300" />
+              <Quote className="h-8 w-8 text-cyan-400 mb-6 group-hover:scale-110 transition-transform duration-300" />
               
               <div className="space-y-6">
                 <p className="text-gray-800 leading-relaxed italic">
