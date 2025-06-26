@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Baby, Shield } from 'lucide-react';
+import { ArrowRight, Baby, Shield, Stethoscope } from 'lucide-react';
 
 interface HeroProps {
   onGetStarted: () => void;
@@ -50,11 +50,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
             {/* Trust Indicators */}
             <div className="flex items-center space-x-8 pt-8">
               <div className="flex items-center space-x-2">
-                <img
-                  src="/favicon.png"
-                  alt="HIPAA Compliant"
-                  className="h-5 w-5"
-                />
+                <Stethoscope className="h-5 w-5 text-cyan-200" />
                 <span className="text-sm text-gray-200 font-bold">HIPAA Compliant</span>
               </div>
               <div className="flex items-center space-x-2">

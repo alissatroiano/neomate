@@ -42,7 +42,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-20 bg-white">
+    <section id="features" className="py-20 bg-cyan-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-4xl font-bold text-gray-900">
@@ -58,7 +58,7 @@ export default function Features() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group p-8 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-xl transition-all duration-300"
+              className="group p-8 shadow-lg bg-transparent-50 rounded-2xl hover:bg-white hover:shadow-xl transition-all duration-300"
             >
               <div className={`${feature.color} p-3 rounded-xl w-fit mb-6 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center`}>
                 {typeof feature.icon === 'function' ? (

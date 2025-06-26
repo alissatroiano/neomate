@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, MessageCircle } from 'lucide-react';
+import { ArrowRight, InfoIcon, MessageCircle } from 'lucide-react';
 
 interface CTAProps {
   onGetStarted: () => void;
@@ -29,14 +29,16 @@ export default function CTA({ onGetStarted }: CTAProps) {
               <span>Start Chatting Now</span>
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-lg hover:bg-white hover:text-teal-600 transition-all duration-300 flex items-center space-x-3 group font-semibold">
-              <img src="/neomate_logo.png" alt="Heart" className="h-5 w-5" />
+            <button 
+            onClick={() => window.location.href = '#about'}
+            className="border-2 border-white text-white px-8 py-4 rounded-lg hover:bg-white hover:text-teal-600 transition-all duration-300 flex items-center space-x-3 group font-semibold">
+              <InfoIcon className="h-5 w-5" />
               <span>Learn More</span>
             </button>
           </div>
 
           <div className="pt-8">
-            <p className="text-teal-200 text-sm">
+            <p className="text-gray-100 text-sm font-medium uppercase tracking-wide">
               Free to start • No credit card required • HIPAA compliant
             </p>
           </div>
