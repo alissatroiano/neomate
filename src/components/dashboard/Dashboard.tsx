@@ -47,6 +47,9 @@ export default function Dashboard() {
   // Check if Supabase is properly configured
   const supabaseConfigured = isSupabaseConfigured()
 
+  // Only show setup guide in development mode
+  const isDevelopment = import.meta.env.MODE === 'development'
+
   useEffect(() => {
     if (!supabaseConfigured) {
       setConnectionError('Database not configured for local development')
@@ -419,8 +422,8 @@ export default function Dashboard() {
   if (!supabaseConfigured) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex flex-col">
-        {/* Local Dev Setup Modal */}
-        {showDevSetup && (
+        {/* Local Dev Setup Modal - Only in development */}
+        {showDevSetup && isDevelopment && (
           <LocalDevSetup onClose={() => setShowDevSetup(false)} />
         )}
 
@@ -446,13 +449,16 @@ export default function Dashboard() {
               </button>
               
               <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setShowDevSetup(true)}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Setup Guide</span>
-                </button>
+                {/* Only show setup button in development */}
+                {isDevelopment && (
+                  <button
+                    onClick={() => setShowDevSetup(true)}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Setup Guide</span>
+                  </button>
+                )}
                 <button
                   onClick={handleBackToLanding}
                   className="flex items-center space-x-2 text-gray-600 hover:text-teal-600 transition-colors"
@@ -472,24 +478,33 @@ export default function Dashboard() {
               <AlertCircle className="h-8 w-8 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Local Development Setup</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {isDevelopment ? 'Local Development Setup' : 'Service Temporarily Unavailable'}
+              </h2>
               <p className="text-gray-600 mb-4">
-                To test Neomate locally, you need to configure your environment variables. This connects the app to your database and AI services.
+                {isDevelopment 
+                  ? 'To test Neomate locally, you need to configure your environment variables. This connects the app to your database and AI services.'
+                  : 'We\'re experiencing technical difficulties. Please try again later or contact support if the issue persists.'
+                }
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
-                <h3 className="font-semibold text-blue-900 mb-2">What you need:</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Supabase project (for database)</li>
-                  <li>• OpenAI API key (for AI chat)</li>
-                  <li>• ElevenLabs agent (optional, for voice)</li>
-                </ul>
-              </div>
-              <button
-                onClick={() => setShowDevSetup(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-              >
-                Open Setup Guide
-              </button>
+              {isDevelopment && (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
+                    <h3 className="font-semibold text-blue-900 mb-2">What you need:</h3>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Supabase project (for database)</li>
+                      <li>• OpenAI API key (for AI chat)</li>
+                      <li>• ElevenLabs agent (optional, for voice)</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setShowDevSetup(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+                  >
+                    Open Setup Guide
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -577,8 +592,8 @@ export default function Dashboard() {
         onClose={() => setIsVoiceChatOpen(false)} 
       />
 
-      {/* Local Dev Setup Modal */}
-      {showDevSetup && (
+      {/* Local Dev Setup Modal - Only in development */}
+      {showDevSetup && isDevelopment && (
         <LocalDevSetup onClose={() => setShowDevSetup(false)} />
       )}
 
@@ -638,13 +653,16 @@ export default function Dashboard() {
               </div>
             </button>
             <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowDevSetup(true)}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Setup Guide"
-              >
-                <Settings className="h-5 w-5" />
-              </button>
+              {/* Only show setup button in development */}
+              {isDevelopment && (
+                <button
+                  onClick={() => setShowDevSetup(true)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Setup Guide"
+                >
+                  <Settings className="h-5 w-5" />
+                </button>
+              )}
               <button
                 onClick={handleBackToLanding}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
