@@ -32,92 +32,78 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")
 console.log('OpenAI API Key configured:', !!OPENAI_API_KEY);
 
-const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specialized in providing therapeutic support and evidence-based information for families navigating neonatal hospitalization and NICU experiences.
+const NICU_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant for families in neonatal care. You provide:
 
-Your role is to:
-- Provide empathetic, understanding responses to emotional concerns
-- Offer evidence-based information about neonatal care when appropriate
-- Help families understand medical procedures and equipment in simple terms
-- Support parents through the emotional challenges of NICU hospitalization
-- Encourage communication with medical teams when needed
-- Provide coping strategies for stress, anxiety, and difficult emotions
-- REMEMBER and reference previous conversations within the same chat thread
-- Show continuity and build upon previous discussions
-- Reference specific details families have shared (baby's name, diagnosis, timeline, etc.)
+COMMUNICATION STYLE:
+- Keep responses SHORT and focused (2-3 paragraphs maximum)
+- Lead with empathy, then provide key information
+- Use simple, clear language
+- Be warm but concise
+- Avoid lengthy explanations unless specifically asked
 
-Guidelines:
-- Always be compassionate and understanding
-- Acknowledge the difficulty of the NICU journey
-- Provide accurate, evidence-based medical information when relevant
-- Encourage families to discuss medical decisions with their healthcare team
-- Offer emotional support and validation
-- Use clear, accessible language
-- Be sensitive to the stress and trauma families may be experiencing
-- Provide hope while being realistic about challenges
-- MAINTAIN CONVERSATION MEMORY - reference previous messages in the same conversation
-- Show that you remember their specific situation and care about their journey
+CORE APPROACH:
+1. Acknowledge their feelings briefly
+2. Give essential information or guidance
+3. Suggest one clear next step
+4. Offer continued support
 
-CRITICAL: You have access to the full conversation history. Use this to provide personalized, contextual responses that show you remember what the family has shared with you. If they mention their baby's diagnosis in one message, remember it in subsequent messages. If they share their baby's name, use it. Show genuine care and continuity.
+MEDICAL GUIDANCE:
+- Provide evidence-based neonatal care information
+- Explain NICU procedures simply
+- Always recommend discussing specifics with medical team
+- Focus on most important points, not comprehensive details
 
-Remember: You are not a replacement for medical care, but a supportive companion during a difficult journey who remembers and cares about their specific situation.`
+EMOTIONAL SUPPORT:
+- Validate feelings quickly and genuinely
+- Offer practical coping strategies
+- Normalize NICU experiences
+- Be reassuring but realistic
+
+CONVERSATION MEMORY:
+- Remember previous conversations in this chat
+- Reference specific details they've shared (baby's name, diagnosis, etc.)
+- Show continuity without repeating everything
+
+RESPONSE LENGTH:
+- Aim for 3-5 sentences for simple questions
+- Maximum 2-3 short paragraphs for complex topics
+- Be complete but concise
+- Quality over quantity
+
+Remember: Families are overwhelmed. Give them what they need to know without information overload. Be their supportive companion, not a medical textbook.`
 
 // Intelligent fallback responses for common NICU concerns
 const getIntelligentFallback = (userMessage: string): string => {
   const message = userMessage.toLowerCase()
   
   if (message.includes('eiee') || message.includes('epilepsy') || message.includes('seizure')) {
-    return `I understand you're concerned about EIEE (Early Infantile Epileptic Encephalopathy). This is understandably very frightening for any parent. EIEE is a rare but serious condition that typically appears in the first few months of life with seizures that can be difficult to control.
+    return `I understand your concern about EIEE. This is frightening, but you're not alone. Many families face this challenging condition, and treatments continue to improve.
 
-While I'm having technical difficulties accessing my full knowledge base right now, I want you to know that:
-
-• Your medical team is the best resource for specific information about your baby's condition and treatment plan
-• Many families have walked this path before you, and support is available
-• Each baby's journey with EIEE is unique, and treatments continue to improve
-• It's completely normal to feel overwhelmed, scared, and uncertain
-
-Please don't hesitate to ask your neurologist or neonatologist about:
-- Treatment options and their goals
-- What to expect in the coming days/weeks
-- Support resources for families
-- How you can best support your baby
-
-You're not alone in this journey. Your love and advocacy for your baby matters tremendously.`
+Please ask your neurologist about treatment goals, what to expect, and support resources. Your love and advocacy matter tremendously during this difficult time.`
   }
   
   if (message.includes('breathing') || message.includes('ventilator') || message.includes('oxygen')) {
-    return `I understand you have concerns about your baby's breathing. This is one of the most common and frightening aspects of NICU care for parents. While I'm having technical difficulties right now, I want to reassure you that breathing support is very common in the NICU, and the medical team is closely monitoring your baby.
+    return `Breathing concerns are very common in the NICU. The medical team is closely monitoring your baby, and breathing support helps many babies thrive.
 
-Please speak with your nurse or doctor about:
-- What type of breathing support your baby is receiving
-- What the monitors and alarms mean
-- How your baby is progressing
-- When changes to breathing support might be expected
-
-Your presence and voice can be comforting to your baby, even with breathing equipment. You're doing everything right by being there and asking questions.`
+Ask your nurse about what the monitors mean and how your baby is progressing. Your presence and voice are comforting, even with equipment around.`
   }
   
   if (message.includes('feeding') || message.includes('tube') || message.includes('milk')) {
-    return `Feeding concerns are very common in the NICU. Whether it's about tube feeding, breastfeeding, or formula, know that the medical team will work with you to find the best approach for your baby. While I'm having technical difficulties, I encourage you to discuss your feeding goals and concerns with your baby's care team. They can provide specific guidance based on your baby's needs and development.`
+    return `Feeding challenges are normal in the NICU. The team will work with you to find the best approach for your baby's needs and development.
+
+Discuss your feeding goals with the care team - they can provide specific guidance based on your baby's progress.`
   }
   
   if (message.includes('scared') || message.includes('afraid') || message.includes('worried') || message.includes('anxious')) {
-    return `Your feelings are completely valid and normal. The NICU experience is overwhelming, and it's natural to feel scared, worried, or anxious. While I'm having technical difficulties right now, I want you to know that you're not alone. Many parents have felt exactly what you're feeling.
+    return `Your feelings are completely normal. The NICU is overwhelming, and many parents feel exactly what you're experiencing.
 
-Consider reaching out to:
-- Your baby's social worker or family support coordinator
-- Other NICU parents (many hospitals have support groups)
-- A counselor who specializes in medical trauma
-- Your own support network of family and friends
-
-Taking care of your emotional well-being is important for both you and your baby. You're being the best parent you can be in an incredibly difficult situation.`
+Consider reaching out to your social worker, other NICU parents, or a counselor. Taking care of your emotional well-being helps both you and your baby.`
   }
   
   // Default fallback
-  return `I'm experiencing technical difficulties right now, but I want you to know that your concerns are valid and important. The NICU journey is incredibly challenging, and it's completely normal to feel overwhelmed.
+  return `I'm having technical difficulties, but your concerns are important. The NICU journey is challenging, and your feelings are valid.
 
-Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have. They are there to support you and provide the specific guidance you need.
-
-You're doing an amazing job navigating this challenging journey. Your love and presence matter more than you know.`
+Please speak with your medical team about any worries. You're doing an amazing job in a difficult situation.`
 }
 
 serve(async (req: Request) => {
@@ -141,7 +127,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'OpenAI API key not configured',
-          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting to my AI service right now, please know that your feelings are valid and you're not alone in this journey. Please don't hesitate to speak with your medical team or a counselor if you need immediate support."
+          fallback: "I'm here to support you through this challenging time. While I'm having trouble connecting right now, please know that your feelings are valid and you're not alone. Please speak with your medical team if you need immediate support."
         }),
         {
           status: 200,
@@ -288,7 +274,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: conversationMessages,
-        max_tokens: 500,
+        max_tokens: 300, // Reduced from 500 to encourage shorter responses
         temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,

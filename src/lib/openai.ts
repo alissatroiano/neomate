@@ -5,57 +5,45 @@ export interface ChatMessage {
   content: string
 }
 
-const NEOMATE_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant specifically designed to support families navigating neonatal care and NICU hospitalization. You are:
-
-CORE IDENTITY:
-- A therapeutic AI companion trained by healthcare professionals
-- Empathetic, warm, and understanding
-- Knowledgeable about neonatal care, NICU procedures, and family support
-- Always prioritizing emotional support alongside medical information
+const NEOMATE_SYSTEM_PROMPT = `You are Neomate, a compassionate AI assistant for families in neonatal care. You provide:
 
 COMMUNICATION STYLE:
-- Speak with genuine empathy and warmth
-- Acknowledge the emotional weight of NICU experiences
-- Use clear, accessible language (avoid excessive medical jargon)
-- Validate feelings and normalize the NICU journey challenges
-- Offer hope while being realistic
+- Keep responses SHORT and focused (2-3 paragraphs maximum)
+- Lead with empathy, then provide key information
+- Use simple, clear language
+- Be warm but concise
+- Avoid lengthy explanations unless specifically asked
+
+CORE APPROACH:
+1. Acknowledge their feelings briefly
+2. Give essential information or guidance
+3. Suggest one clear next step
+4. Offer continued support
 
 MEDICAL GUIDANCE:
-- Provide evidence-based information about neonatal care
-- Explain NICU procedures, equipment, and terminology
-- Discuss common NICU experiences and timelines
-- Always emphasize that you complement, never replace, medical professionals
-- Encourage communication with the medical team for specific medical decisions
+- Provide evidence-based neonatal care information
+- Explain NICU procedures simply
+- Always recommend discussing specifics with medical team
+- Focus on most important points, not comprehensive details
 
 EMOTIONAL SUPPORT:
-- Recognize and validate the unique stresses of NICU parents
-- Offer coping strategies for anxiety, fear, and uncertainty
-- Provide reassurance about normal NICU experiences
-- Support the entire family unit (parents, siblings, extended family)
-- Acknowledge the strength it takes to navigate this journey
+- Validate feelings quickly and genuinely
+- Offer practical coping strategies
+- Normalize NICU experiences
+- Be reassuring but realistic
 
 CONVERSATION MEMORY:
-- Remember and reference previous conversations within the same chat thread
-- Build upon previous discussions and show continuity
-- Reference specific details the family has shared (baby's name, diagnosis, timeline, etc.)
-- Show that you're following their journey and care about their specific situation
+- Remember previous conversations in this chat
+- Reference specific details they've shared (baby's name, diagnosis, etc.)
+- Show continuity without repeating everything
 
-SAFETY & BOUNDARIES:
-- Always recommend immediate medical attention for urgent concerns
-- Clearly state when situations require immediate professional intervention
-- Never provide specific medical diagnoses or treatment recommendations
-- Encourage open communication with healthcare providers
-- Maintain appropriate boundaries while being supportive
+RESPONSE LENGTH:
+- Aim for 3-5 sentences for simple questions
+- Maximum 2-3 short paragraphs for complex topics
+- Be complete but concise
+- Quality over quantity
 
-RESPONSE APPROACH:
-1. Acknowledge the emotional aspect of their situation first
-2. Reference relevant previous conversations when applicable
-3. Provide relevant, evidence-based information
-4. Offer emotional support and validation
-5. Suggest next steps or coping strategies
-6. Remind them of available support resources
-
-Remember: Every family's NICU journey is unique. Your role is to provide comfort, information, and support during one of the most challenging times in their lives. Always maintain conversation continuity and show that you remember their specific situation.`
+Remember: Families are overwhelmed. Give them what they need to know without information overload. Be their supportive companion, not a medical textbook.`
 
 export async function generateChatResponse(messages: ChatMessage[]): Promise<string> {
   try {
@@ -140,78 +128,39 @@ function getIntelligentFallback(userMessage: string): string {
   const message = userMessage.toLowerCase()
   
   if (message.includes('eiee') || message.includes('epilepsy') || message.includes('seizure')) {
-    return `I understand you're concerned about EIEE (Early Infantile Epileptic Encephalopathy). This is understandably very frightening for any parent. EIEE is a rare but serious condition that typically appears in the first few months of life with seizures that can be difficult to control.
+    return `I understand your concern about EIEE. This is frightening, but you're not alone. Many families face this challenging condition, and treatments continue to improve.
 
-While I'm having technical difficulties accessing my full knowledge base right now, I want you to know that:
-
-• Your medical team is the best resource for specific information about your baby's condition and treatment plan
-• Many families have walked this path before you, and support is available
-• Each baby's journey with EIEE is unique, and treatments continue to improve
-• It's completely normal to feel overwhelmed, scared, and uncertain
-
-Please don't hesitate to ask your neurologist or neonatologist about:
-- Treatment options and their goals
-- What to expect in the coming days/weeks
-- Support resources for families
-- How you can best support your baby
-
-You're not alone in this journey. Your love and advocacy for your baby matters tremendously.`
+Please ask your neurologist about treatment goals, what to expect, and support resources. Your love and advocacy matter tremendously during this difficult time.`
   }
   
   if (message.includes('breathing') || message.includes('ventilator') || message.includes('oxygen')) {
-    return `I understand you have concerns about your baby's breathing. This is one of the most common and frightening aspects of NICU care for parents. While I'm having technical difficulties right now, I want to reassure you that breathing support is very common in the NICU, and the medical team is closely monitoring your baby.
+    return `Breathing concerns are very common in the NICU. The medical team is closely monitoring your baby, and breathing support helps many babies thrive.
 
-Please speak with your nurse or doctor about:
-- What type of breathing support your baby is receiving
-- What the monitors and alarms mean
-- How your baby is progressing
-- When changes to breathing support might be expected
-
-Your presence and voice can be comforting to your baby, even with breathing equipment. You're doing everything right by being there and asking questions.`
+Ask your nurse about what the monitors mean and how your baby is progressing. Your presence and voice are comforting, even with equipment around.`
   }
   
   if (message.includes('feeding') || message.includes('tube') || message.includes('milk')) {
-    return `Feeding concerns are very common in the NICU. Whether it's about tube feeding, breastfeeding, or formula, know that the medical team will work with you to find the best approach for your baby. While I'm having technical difficulties, I encourage you to discuss your feeding goals and concerns with your baby's care team. They can provide specific guidance based on your baby's needs and development.`
+    return `Feeding challenges are normal in the NICU. The team will work with you to find the best approach for your baby's needs and development.
+
+Discuss your feeding goals with the care team - they can provide specific guidance based on your baby's progress.`
   }
   
   if (message.includes('scared') || message.includes('afraid') || message.includes('worried') || message.includes('anxious')) {
-    return `Your feelings are completely valid and normal. The NICU experience is overwhelming, and it's natural to feel scared, worried, or anxious. While I'm having technical difficulties right now, I want you to know that you're not alone. Many parents have felt exactly what you're feeling.
+    return `Your feelings are completely normal. The NICU is overwhelming, and many parents feel exactly what you're experiencing.
 
-Consider reaching out to:
-- Your baby's social worker or family support coordinator
-- Other NICU parents (many hospitals have support groups)
-- A counselor who specializes in medical trauma
-- Your own support network of family and friends
-
-Taking care of your emotional well-being is important for both you and your baby. You're being the best parent you can be in an incredibly difficult situation.`
+Consider reaching out to your social worker, other NICU parents, or a counselor. Taking care of your emotional well-being helps both you and your baby.`
   }
 
   if (message.includes('support') || message.includes('help') || message.includes('need')) {
-    return `I'm here for you and I hear you. It's completely understandable to feel overwhelmed and in need of support during this challenging time. The NICU journey is one of the most difficult experiences a family can face, and reaching out for help shows incredible strength.
+    return `You're not alone in this journey. Asking for help shows incredible strength during this challenging time.
 
-While I'm having some technical difficulties right now, I want you to know that:
-
-• Your feelings are completely valid and normal
-• You're not alone in this journey - many families have walked this path
-• Asking for support is a sign of strength, not weakness
-• There are many resources available to help you through this
-
-Please consider reaching out to:
-- Your baby's medical team for any medical concerns
-- The hospital's social worker or family support coordinator
-- NICU parent support groups (many hospitals offer these)
-- A counselor who specializes in medical trauma or NICU experiences
-- Trusted family and friends who can provide emotional support
-
-Remember, taking care of yourself is also taking care of your baby. You're doing an amazing job in an incredibly difficult situation, and your baby is lucky to have such a caring parent by their side.`
+Reach out to your medical team for medical concerns, the social worker for support resources, or trusted family and friends. Your baby is lucky to have such a caring parent.`
   }
   
   // Default fallback
-  return `I'm experiencing technical difficulties right now, but I want you to know that your concerns are valid and important. The NICU journey is incredibly challenging, and it's completely normal to feel overwhelmed.
+  return `I'm having technical difficulties, but your concerns are important. The NICU journey is challenging, and your feelings are valid.
 
-Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have. They are there to support you and provide the specific guidance you need.
-
-You're doing an amazing job navigating this challenging journey. Your love and presence matter more than you know.`
+Please speak with your medical team about any worries. You're doing an amazing job in a difficult situation.`
 }
 
 export async function generateConversationTitle(firstMessage: string): Promise<string> {
