@@ -12,7 +12,17 @@ export async function getElevenLabsSignedUrl(): Promise<VoiceChatSession> {
     const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'agent_01jxascan4fg6anwxndmze5jp1'
     console.log('Using agent ID:', agentId)
     
-    // Use POST method with body instead of query parameters
+    // Check if Supabase is configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
+      throw new Error('Supabase is not properly configured. Please set up your Supabase environment variables.')
+    }
+    
+    console.log('Making request to elevenlabs-auth function...')
+    
+    // Use POST method with body
     const { data, error } = await supabase.functions.invoke('elevenlabs-auth', {
       body: { 
         agent_id: agentId 
@@ -22,21 +32,37 @@ export async function getElevenLabsSignedUrl(): Promise<VoiceChatSession> {
     console.log('Supabase function response:', { data, error })
 
     if (error) {
-      console.error('Error getting ElevenLabs signed URL:', error)
+      console.error('Supabase function error:', error)
       
-      // Provide more detailed error information
+      // Provide detailed error information
       let errorMessage = 'Failed to get voice chat session'
-      if (error.message) {
+      
+      if (error.message?.includes('Failed to send a request')) {
+        errorMessage = 'Cannot connect to voice service. Please check your internet connection and try again.'
+      } else if (error.message) {
         errorMessage += `: ${error.message}`
       }
-      if (error.context?.body?.details) {
-        errorMessage += ` - ${error.context.body.details}`
+      
+      // Add context from error response if available
+      if (error.context?.body) {
+        const errorBody = error.context.body
+        if (errorBody.details) {
+          errorMessage += ` - ${errorBody.details}`
+        }
+        if (errorBody.status) {
+          errorMessage += ` (Status: ${errorBody.status})`
+        }
       }
       
       throw new Error(errorMessage)
     }
 
-    if (!data?.signed_url) {
+    if (!data) {
+      console.error('No data in response')
+      throw new Error('No response data received from voice service')
+    }
+
+    if (!data.signed_url) {
       console.error('No signed URL in response:', data)
       throw new Error('No signed URL received from ElevenLabs service')
     }
@@ -57,10 +83,16 @@ export function isElevenLabsConfigured(): boolean {
   const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID
   const hasAgentId = !!agentId && agentId !== 'your-agent-id-here'
   
+  // Also check if Supabase is configured (needed for the edge function)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const hasSupabase = !!supabaseUrl && !!supabaseKey && supabaseUrl !== 'https://placeholder.supabase.co'
+  
   console.log('ElevenLabs configuration check:', {
     hasAgentId,
+    hasSupabase,
     agentId: agentId ? `${agentId.substring(0, 10)}...` : 'none'
   })
   
-  return hasAgentId
+  return hasAgentId && hasSupabase
 }

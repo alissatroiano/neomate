@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX, AlertCircle, Loader2, RefreshCw } from 'lucide-react'
+import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX, AlertCircle, Loader2, RefreshCw, Settings } from 'lucide-react'
 import { getElevenLabsSignedUrl, isElevenLabsConfigured } from '../../lib/elevenlabs'
 
 interface VoiceChatProps {
@@ -12,7 +12,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
   const [isConnected, setIsConnected] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [connectionStatus, setConnectionStatus] = useState<string>('Disconnected')
+  const [connectionStatus, setConnectionStatus] = useState<string>('Ready to connect')
   
   const websocketRef = useRef<WebSocket | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -20,9 +20,14 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
   const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    if (isOpen && isElevenLabsConfigured()) {
-      // Don't auto-initialize, let user click to start
-      setConnectionStatus('Ready to connect')
+    if (isOpen) {
+      if (isElevenLabsConfigured()) {
+        setConnectionStatus('Ready to connect')
+        setError(null)
+      } else {
+        setError('Voice chat is not properly configured')
+        setConnectionStatus('Configuration required')
+      }
     }
     
     return () => {
@@ -34,9 +39,16 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
     try {
       setIsConnecting(true)
       setError(null)
-      setConnectionStatus('Getting voice session...')
+      setConnectionStatus('Checking configuration...')
 
       console.log('Starting voice chat initialization...')
+
+      // Check configuration first
+      if (!isElevenLabsConfigured()) {
+        throw new Error('Voice chat is not properly configured. Please check your environment settings.')
+      }
+
+      setConnectionStatus('Getting voice session...')
 
       // Get signed URL from our Supabase function
       const { signedUrl } = await getElevenLabsSignedUrl()
@@ -44,28 +56,47 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
       
       setConnectionStatus('Requesting microphone access...')
       
-      // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 16000
-        } 
-      })
+      // Request microphone access with better error handling
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 16000
+          } 
+        })
+      } catch (micError: any) {
+        console.error('Microphone access error:', micError)
+        if (micError.name === 'NotAllowedError') {
+          throw new Error('Microphone access denied. Please allow microphone access and try again.')
+        } else if (micError.name === 'NotFoundError') {
+          throw new Error('No microphone found. Please connect a microphone and try again.')
+        } else {
+          throw new Error('Failed to access microphone: ' + micError.message)
+        }
+      }
+      
       streamRef.current = stream
       console.log('Microphone access granted')
 
       setConnectionStatus('Connecting to voice service...')
 
       // Initialize audio context
-      audioContextRef.current = new AudioContext({ sampleRate: 16000 })
+      try {
+        audioContextRef.current = new AudioContext({ sampleRate: 16000 })
+      } catch (audioError: any) {
+        console.error('Audio context error:', audioError)
+        throw new Error('Failed to initialize audio: ' + audioError.message)
+      }
       
       // Connect to ElevenLabs WebSocket
       console.log('Connecting to WebSocket:', signedUrl.substring(0, 50) + '...')
       const ws = new WebSocket(signedUrl)
       websocketRef.current = ws
 
+      // Set up WebSocket event handlers
       ws.onopen = () => {
         console.log('Connected to ElevenLabs voice chat')
         setIsConnected(true)
@@ -92,6 +123,9 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
               console.log('User said:', message.user_transcript)
             } else if (message.type === 'agent_response') {
               console.log('Agent responding...')
+              setConnectionStatus('Neomate is speaking...')
+            } else if (message.type === 'agent_response_complete') {
+              setConnectionStatus('Voice chat ready - Speak now!')
             }
           } catch (e) {
             console.log('Received non-JSON message:', event.data)
@@ -111,16 +145,27 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
         setIsConnected(false)
         setConnectionStatus('Disconnected')
         if (event.code !== 1000) { // Not a normal closure
-          setError(`Connection closed unexpectedly (${event.code})`)
+          setError(`Connection closed unexpectedly (Code: ${event.code})`)
         }
         cleanup()
       }
+
+      // Set a timeout for connection
+      setTimeout(() => {
+        if (isConnecting && !isConnected) {
+          console.log('Connection timeout')
+          setError('Connection timeout. Please try again.')
+          setIsConnecting(false)
+          cleanup()
+        }
+      }, 30000) // 30 second timeout
 
     } catch (error: any) {
       console.error('Error initializing voice chat:', error)
       setError(error.message || 'Failed to initialize voice chat')
       setIsConnecting(false)
       setConnectionStatus('Failed to connect')
+      cleanup()
     }
   }
 
@@ -137,14 +182,17 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
         mimeType = 'audio/webm'
         if (!MediaRecorder.isTypeSupported(mimeType)) {
           mimeType = 'audio/mp4'
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = '' // Let browser choose
+          }
         }
       }
 
-      console.log('Starting recording with MIME type:', mimeType)
+      console.log('Starting recording with MIME type:', mimeType || 'default')
 
-      const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType: mimeType
-      })
+      const mediaRecorder = new MediaRecorder(streamRef.current, 
+        mimeType ? { mimeType } : undefined
+      )
       mediaRecorderRef.current = mediaRecorder
 
       mediaRecorder.ondataavailable = (event) => {
@@ -154,14 +202,14 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
         }
       }
 
-      mediaRecorder.onerror = (event) => {
+      mediaRecorder.onerror = (event: any) => {
         console.error('MediaRecorder error:', event)
-        setError('Recording error occurred')
+        setError('Recording error occurred: ' + (event.error?.message || 'Unknown error'))
       }
 
       mediaRecorder.start(250) // Send data every 250ms
       console.log('Started recording audio')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting recording:', error)
       setError('Failed to start recording: ' + error.message)
     }
@@ -202,6 +250,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
     }
     
     console.log('Microphone', newMutedState ? 'muted' : 'unmuted')
+    setConnectionStatus(newMutedState ? 'Microphone muted' : 'Voice chat ready - Speak now!')
   }
 
   const endCall = () => {
@@ -214,19 +263,37 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
     console.log('Cleaning up voice chat resources')
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
+      try {
+        mediaRecorderRef.current.stop()
+      } catch (e) {
+        console.log('Error stopping media recorder:', e)
+      }
     }
     
     if (websocketRef.current) {
-      websocketRef.current.close(1000, 'User ended call')
+      try {
+        websocketRef.current.close(1000, 'User ended call')
+      } catch (e) {
+        console.log('Error closing websocket:', e)
+      }
     }
     
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current.getTracks().forEach(track => {
+        try {
+          track.stop()
+        } catch (e) {
+          console.log('Error stopping track:', e)
+        }
+      })
     }
     
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close()
+      try {
+        audioContextRef.current.close()
+      } catch (e) {
+        console.log('Error closing audio context:', e)
+      }
     }
 
     // Reset refs
@@ -237,37 +304,19 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
 
     setIsConnected(false)
     setIsConnecting(false)
+    setIsMuted(false)
     setConnectionStatus('Disconnected')
   }
 
   const retryConnection = () => {
     setError(null)
-    initializeVoiceChat()
+    cleanup()
+    setTimeout(() => {
+      initializeVoiceChat()
+    }, 1000)
   }
 
   if (!isOpen) return null
-
-  if (!isElevenLabsConfigured()) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-          <div className="flex items-center space-x-3 mb-4">
-            <AlertCircle className="h-6 w-6 text-amber-500" />
-            <h3 className="text-lg font-semibold">Voice Chat Unavailable</h3>
-          </div>
-          <p className="text-gray-600 mb-4">
-            Voice chat is not configured. Please contact support to enable this feature.
-          </p>
-          <button
-            onClick={onClose}
-            className="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -280,12 +329,18 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
                 ? 'bg-gradient-to-r from-green-500 to-green-600' 
                 : isConnecting 
                 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' 
+                : error
+                ? 'bg-gradient-to-r from-red-500 to-red-600'
                 : 'bg-gradient-to-r from-teal-500 to-cyan-600'
             }`}>
               {isConnecting ? (
                 <Loader2 className="h-10 w-10 text-white animate-spin" />
+              ) : error ? (
+                <AlertCircle className="h-10 w-10 text-white" />
+              ) : isConnected ? (
+                isMuted ? <VolumeX className="h-10 w-10 text-white" /> : <Volume2 className="h-10 w-10 text-white" />
               ) : (
-                <Volume2 className="h-10 w-10 text-white" />
+                <Phone className="h-10 w-10 text-white" />
               )}
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Voice Chat with Neomate</h3>
@@ -294,19 +349,27 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                 <p className="text-sm text-red-700 font-medium">Connection Error</p>
               </div>
               <p className="text-sm text-red-600 mb-3">{error}</p>
-              <button
-                onClick={retryConnection}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm flex items-center space-x-2 mx-auto"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>Retry</span>
-              </button>
+              <div className="flex space-x-2 justify-center">
+                <button
+                  onClick={retryConnection}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm flex items-center space-x-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Retry</span>
+                </button>
+                <button
+                  onClick={onClose}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           )}
 
@@ -365,6 +428,20 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
                 <Phone className="h-5 w-5" />
                 <span>Start Voice Chat</span>
               </button>
+            </div>
+          )}
+
+          {/* Configuration Info */}
+          {!isElevenLabsConfigured() && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <Settings className="h-5 w-5 text-amber-600" />
+                <p className="text-sm text-amber-800 font-medium">Configuration Required</p>
+              </div>
+              <p className="text-sm text-amber-700">
+                Voice chat requires proper Supabase and ElevenLabs configuration. 
+                Please contact support to enable this feature.
+              </p>
             </div>
           )}
         </div>
