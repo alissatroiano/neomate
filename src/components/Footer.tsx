@@ -27,7 +27,7 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <div className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
-                <img src="/neomate_logo.png" alt="Heart" className="h-5 w-5" />
+                <img src="/favicon.png" alt="Heart" className="h-5 w-5" />
               </div>
               <div className="bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
                 <Mail className="h-5 w-5" />

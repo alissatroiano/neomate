@@ -10,31 +10,31 @@ const stats = [
 
 export default function About() {
   return (
-    <section id="about" className="py-20 bg-gradient-to-br from-primary-100 via-warm-100 to-accent-100">
+    <section id="about" className="py-20 bg-gradient-to-br from-teal-100 to-cyan-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Content */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-4xl font-bold text-warm-800">
+              <h2 className="text-4xl font-bold text-gray-900">
                 Built by Experts,
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-warm-600 to-primary-600 block font-script">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-cyan-600 block font-script">
                   Designed for Families
                 </span>
               </h2>
-              <p className="text-xl text-warm-700 leading-relaxed">
+              <p className="text-xl text-gray-600 leading-relaxed">
                 Neomate AI assistant provides guidance, advice, and resources for families during neonatal hospitalization. Neomate's advanced AI technology is designed to be a compassionate companion, offering personalized support and evidence-based information tailored to the unique needs of each family.
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-r from-warm-500 to-primary-600 p-2 rounded-lg flex-shrink-0">
-                  <img src="/favicon.png" alt="logo" className="h-5 w-5 rounded-full" />
+                <div className="bg-gradient-to-r from-cyan-500 to-teal-600 p-2 rounded-lg flex-shrink-0">
+                  <img src="/favicon.png" alt="logo" className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-warm-800 mb-2">Empathetic Technology</h3>
-                  <p className="text-warm-600">
+                  <h3 className="font-semibold text-gray-900 mb-2">Empathetic Technology</h3>
+                  <p className="text-gray-600">
                     Our AI is trained specifically to understand and respond to the emotional 
                     needs of families in neonatal care situations.
                   </p>
@@ -42,12 +42,12 @@ export default function About() {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-r from-warm-500 to-primary-600 p-2 rounded-lg flex-shrink-0">
+                <div className="bg-gradient-to-r from-cyan-500 to-teal-600 p-2 rounded-lg flex-shrink-0">
                   <Stethoscope className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-warm-800 mb-2">Medical Accuracy</h3>
-                  <p className="text-warm-600">
+                  <h3 className="font-semibold text-gray-900 mb-2">Medical Accuracy</h3>
+                  <p className="text-gray-600">
                     All information is reviewed by board-certified neonatologists 
                     and updated with the latest medical research.
                   </p>
@@ -55,12 +55,12 @@ export default function About() {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-gradient-to-r from-primary-600 to-warm-500 p-2 rounded-lg flex-shrink-0">
+                <div className="bg-gradient-to-r from-teal-600 to-cyan-500 p-2 rounded-lg flex-shrink-0">
                   <Users className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-warm-800 mb-2">Community Support</h3>
-                  <p className="text-warm-600">
+                  <h3 className="font-semibold text-gray-900 mb-2">Community Support</h3>
+                  <p className="text-gray-600">
                     Connect with other families and share experiences in a safe, 
                     moderated environment when you're ready.
                   </p>
@@ -74,19 +74,19 @@ export default function About() {
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300 border border-warm-200"
+                className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300"
               >
-                <div className="bg-gradient-to-r from-warm-500 to-primary-600 p-3 rounded-xl w-fit mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center shadow-lg">
+                <div className="bg-gradient-to-r from-teal-500 to-cyan-600 p-3 rounded-xl w-fit mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                   {typeof stat.icon === 'function' ? (
                     <stat.icon />
                   ) : (
                     <stat.icon className="h-6 w-6 text-white" />
                   )}
                 </div>
-                <div className="text-3xl font-bold text-warm-800 mb-2">
+                <div className="text-3xl font-bold text-gray-900 mb-2">
                   {stat.number}
                 </div>
-                <div className="text-warm-600 font-medium">
+                <div className="text-gray-600 font-medium">
                   {stat.label}
                 </div>
               </div>
