@@ -3,6 +3,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { supabase, Conversation, Message } from '../../lib/supabase'
 import { generateChatResponse, generateConversationTitle } from '../../lib/openai'
+import { isElevenLabsConfigured } from '../../lib/elevenlabs'
+import VoiceChat from './VoiceChat'
 import { 
   MessageCircle, 
   Plus, 
@@ -19,7 +21,8 @@ import {
   Check,
   XIcon,
   RefreshCw,
-  Home
+  Home,
+  Mic
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -36,6 +39,7 @@ export default function Dashboard() {
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [conversationLoading, setConversationLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
 
   // Check if Supabase is properly configured
   const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && 
@@ -291,7 +295,7 @@ export default function Dashboard() {
       } catch (error) {
         console.error('Error generating AI response:', error)
         // Add fallback response
-        const fallbackResponse = "I'm experiencing some technical difficulties right now, but I want you to know that your concerns are valid and important. Please don't hesitate to speak directly with your baby's medical team about any questions or worries you have."
+        const fallbackResponse = "I'm having technical difficulties, but your concerns are important. Please speak with your medical team about any worries. You're doing an amazing job in a difficult situation."
         
         const { data: fallbackMessageData } = await supabase
           .from('messages')
@@ -406,7 +410,7 @@ export default function Dashboard() {
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
               >
                 <img 
-                  src="/neomate_logo.png" 
+                  src="/favicon.png" 
                   alt="Neomate" 
                   className="h-10 w-10"
                 />
@@ -469,7 +473,7 @@ export default function Dashboard() {
                 className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
               >
                 <img 
-                  src="/neomate_logo.png" 
+                  src="/favicon.png" 
                   alt="Neomate" 
                   className="h-10 w-10"
                 />
@@ -521,6 +525,12 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen bg-gray-50 flex relative">
+      {/* Voice Chat Modal */}
+      <VoiceChat 
+        isOpen={isVoiceChatOpen} 
+        onClose={() => setIsVoiceChatOpen(false)} 
+      />
+
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
@@ -565,7 +575,7 @@ export default function Dashboard() {
               className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
             >
               <img 
-                src="/neomate_logo.png" 
+                src="/favicon.png" 
                 alt="Neomate" 
                 className="h-8 w-8"
               />
@@ -631,6 +641,17 @@ export default function Dashboard() {
             <Plus className="h-5 w-5" />
             <span>New Chat</span>
           </button>
+          
+          {/* Voice Chat Button */}
+          {isElevenLabsConfigured() && (
+            <button
+              onClick={() => setIsVoiceChatOpen(true)}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            >
+              <Mic className="h-5 w-5" />
+              <span>Voice Chat</span>
+            </button>
+          )}
         </div>
 
         {/* Conversations List */}
@@ -762,6 +783,17 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
+                
+                {/* Voice Chat Button in Header */}
+                {isElevenLabsConfigured() && (
+                  <button
+                    onClick={() => setIsVoiceChatOpen(true)}
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                  >
+                    <Mic className="h-4 w-4" />
+                    <span className="hidden sm:inline">Voice Chat</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -776,6 +808,15 @@ export default function Dashboard() {
                   <p className="text-gray-500 mb-4 px-4">
                     Ask me anything about neonatal care, or just share how you're feeling. I'm here to provide compassionate support and evidence-based information.
                   </p>
+                  {isElevenLabsConfigured() && (
+                    <button
+                      onClick={() => setIsVoiceChatOpen(true)}
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 mx-auto mb-4"
+                    >
+                      <Mic className="h-5 w-5" />
+                      <span>Try Voice Chat</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -869,6 +910,16 @@ export default function Dashboard() {
                 >
                   Start New Chat
                 </button>
+                
+                {isElevenLabsConfigured() && (
+                  <button
+                    onClick={() => setIsVoiceChatOpen(true)}
+                    className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2 w-full"
+                  >
+                    <Mic className="h-5 w-5" />
+                    <span>Try Voice Chat</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
