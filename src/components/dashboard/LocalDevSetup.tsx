@@ -6,6 +6,11 @@ interface LocalDevSetupProps {
 }
 
 export default function LocalDevSetup({ onClose }: LocalDevSetupProps) {
+  // Only show setup guide in development mode
+  if (import.meta.env.MODE === 'production') {
+    return null
+  }
+
   const envVars = {
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
     supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -169,7 +174,7 @@ export default function LocalDevSetup({ onClose }: LocalDevSetupProps) {
             </div>
           </div>
 
-          {/* Current Values (for debugging) */}
+          {/* Current Values (for debugging) - Only show in development */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Current Environment Values</h3>
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
@@ -177,25 +182,25 @@ export default function LocalDevSetup({ onClose }: LocalDevSetupProps) {
                 <div>
                   <span className="font-medium">Supabase URL:</span>
                   <div className="text-gray-600 font-mono text-xs break-all">
-                    {envVars.supabaseUrl || 'Not set'}
+                    {envVars.supabaseUrl ? 'Configured' : 'Not set'}
                   </div>
                 </div>
                 <div>
                   <span className="font-medium">Supabase Key:</span>
                   <div className="text-gray-600 font-mono text-xs">
-                    {envVars.supabaseKey ? `${envVars.supabaseKey.substring(0, 20)}...` : 'Not set'}
+                    {envVars.supabaseKey ? 'Configured' : 'Not set'}
                   </div>
                 </div>
                 <div>
                   <span className="font-medium">OpenAI Key:</span>
                   <div className="text-gray-600 font-mono text-xs">
-                    {envVars.openaiKey ? `${envVars.openaiKey.substring(0, 20)}...` : 'Not set'}
+                    {envVars.openaiKey ? 'Configured' : 'Not set'}
                   </div>
                 </div>
                 <div>
                   <span className="font-medium">ElevenLabs Agent:</span>
                   <div className="text-gray-600 font-mono text-xs">
-                    {envVars.elevenLabsAgent || 'Not set'}
+                    {envVars.elevenLabsAgent ? 'Configured' : 'Not set'}
                   </div>
                 </div>
               </div>
