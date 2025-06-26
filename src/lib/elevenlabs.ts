@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export interface VoiceChatSession {
   signedUrl: string
@@ -13,10 +13,7 @@ export async function getElevenLabsSignedUrl(): Promise<VoiceChatSession> {
     console.log('Using agent ID:', agentId)
     
     // Check if Supabase is configured
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey || supabaseUrl === 'https://placeholder.supabase.co') {
+    if (!isSupabaseConfigured()) {
       throw new Error('Supabase is not properly configured. Please set up your Supabase environment variables.')
     }
     
@@ -35,19 +32,19 @@ export async function getElevenLabsSignedUrl(): Promise<VoiceChatSession> {
       console.error('Supabase function error:', error)
       
       // Provide detailed error information
-      let errorMessage = 'Failed to get voice chat session'
+      let errorMessage = 'Cannot connect to voice service. Please check your internet connection and try again.'
       
       if (error.message?.includes('Failed to send a request')) {
         errorMessage = 'Cannot connect to voice service. Please check your internet connection and try again.'
       } else if (error.message) {
-        errorMessage += `: ${error.message}`
+        errorMessage += ` - ${error.message}`
       }
       
       // Add context from error response if available
       if (error.context?.body) {
         const errorBody = error.context.body
         if (errorBody.details) {
-          errorMessage += ` - ${errorBody.details}`
+          errorMessage += ` Details: ${errorBody.details}`
         }
         if (errorBody.status) {
           errorMessage += ` (Status: ${errorBody.status})`
@@ -84,9 +81,7 @@ export function isElevenLabsConfigured(): boolean {
   const hasAgentId = !!agentId && agentId !== 'your-agent-id-here'
   
   // Also check if Supabase is configured (needed for the edge function)
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-  const hasSupabase = !!supabaseUrl && !!supabaseKey && supabaseUrl !== 'https://placeholder.supabase.co'
+  const hasSupabase = isSupabaseConfigured()
   
   console.log('ElevenLabs configuration check:', {
     hasAgentId,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { supabase, Conversation, Message } from '../../lib/supabase'
+import { supabase, Conversation, Message, isSupabaseConfigured } from '../../lib/supabase'
 import { generateChatResponse, generateConversationTitle } from '../../lib/openai'
 import { isElevenLabsConfigured } from '../../lib/elevenlabs'
 import VoiceChat from './VoiceChat'
@@ -42,13 +42,11 @@ export default function Dashboard() {
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false)
 
   // Check if Supabase is properly configured
-  const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && 
-                               import.meta.env.VITE_SUPABASE_ANON_KEY &&
-                               import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co'
+  const supabaseConfigured = isSupabaseConfigured()
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setConnectionError('Supabase is not properly configured. Please check your environment variables.')
+    if (!supabaseConfigured) {
+      setConnectionError('Supabase is not properly configured. Please set up your database connection.')
       setInitialLoading(false)
       return
     }
@@ -58,7 +56,7 @@ export default function Dashboard() {
     } else {
       setInitialLoading(false)
     }
-  }, [user, isSupabaseConfigured])
+  }, [user, supabaseConfigured])
 
   useEffect(() => {
     if (activeConversation) {
@@ -73,6 +71,12 @@ export default function Dashboard() {
   }
 
   const fetchConversations = async () => {
+    if (!supabaseConfigured) {
+      setConnectionError('Database not configured')
+      setInitialLoading(false)
+      return
+    }
+
     try {
       console.log('Fetching conversations for user:', user?.id)
       setConversationLoading(true)
@@ -115,6 +119,11 @@ export default function Dashboard() {
   }
 
   const fetchMessages = async (conversationId: string) => {
+    if (!supabaseConfigured) {
+      setConnectionError('Database not configured')
+      return
+    }
+
     try {
       console.log('Fetching messages for conversation:', conversationId)
       setLoading(true)
@@ -151,7 +160,7 @@ export default function Dashboard() {
   }
 
   const createNewConversation = async () => {
-    if (!user) return
+    if (!user || !supabaseConfigured) return
 
     try {
       console.log('Creating new conversation for user:', user.id)
@@ -186,6 +195,8 @@ export default function Dashboard() {
   }
 
   const updateConversationTitle = async (conversationId: string, newTitle: string) => {
+    if (!supabaseConfigured) return
+
     try {
       const { error } = await supabase
         .from('conversations')
@@ -210,7 +221,7 @@ export default function Dashboard() {
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation || !user || loading) return
+    if (!newMessage.trim() || !activeConversation || !user || loading || !supabaseConfigured) return
 
     setLoading(true)
     const userMessage = newMessage.trim()
@@ -324,6 +335,8 @@ export default function Dashboard() {
   }
 
   const deleteConversation = async (conversationId: string) => {
+    if (!supabaseConfigured) return
+
     try {
       const { error } = await supabase
         .from('conversations')
@@ -391,14 +404,16 @@ export default function Dashboard() {
   const handleRefresh = () => {
     console.log('Refreshing conversations and messages')
     setConnectionError(null)
-    fetchConversations()
-    if (activeConversation) {
-      fetchMessages(activeConversation)
+    if (supabaseConfigured) {
+      fetchConversations()
+      if (activeConversation) {
+        fetchMessages(activeConversation)
+      }
     }
   }
 
   // Show connection error if Supabase is not configured
-  if (!isSupabaseConfigured) {
+  if (!supabaseConfigured) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex flex-col">
         {/* Header */}
@@ -440,10 +455,18 @@ export default function Dashboard() {
               <AlertCircle className="h-8 w-8 text-red-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Required</h2>
-              <p className="text-gray-600">
-                Supabase environment variables are not properly configured. Please check your .env file and ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Database Setup Required</h2>
+              <p className="text-gray-600 mb-4">
+                To use Neomate's chat features, you need to connect to a Supabase database. This stores your conversations securely and privately.
               </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <h3 className="font-semibold text-blue-900 mb-2">Quick Setup:</h3>
+                <ol className="text-sm text-blue-800 space-y-1">
+                  <li>1. Click "Connect to Supabase" in the top right</li>
+                  <li>2. Follow the setup wizard</li>
+                  <li>3. Your conversations will be saved securely</li>
+                </ol>
+              </div>
             </div>
           </div>
         </div>
@@ -635,7 +658,7 @@ export default function Dashboard() {
         <div className="p-4 space-y-3">
           <button
             onClick={createNewConversation}
-            disabled={!isSupabaseConfigured}
+            disabled={!supabaseConfigured}
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-5 w-5" />
@@ -871,13 +894,13 @@ export default function Dashboard() {
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
                   className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base resize-none"
-                  disabled={loading || !isSupabaseConfigured}
+                  disabled={loading || !supabaseConfigured}
                   rows={1}
                   style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!newMessage.trim() || loading || !isSupabaseConfigured}
+                  disabled={!newMessage.trim() || loading || !supabaseConfigured}
                   className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   <Send className="h-5 w-5" />
@@ -905,7 +928,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <button
                   onClick={createNewConversation}
-                  disabled={!isSupabaseConfigured}
+                  disabled={!supabaseConfigured}
                   className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all duration-300 block w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Start New Chat
