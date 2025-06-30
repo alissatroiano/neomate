@@ -3,25 +3,18 @@ import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
   {
-    name: 'Sarah Johnson',
-    role: 'Mother of Emma (32 weeks)',
-    content: 'Neomate was there for me during the scariest time of my life. The AI helped me understand what was happening and gave me the emotional support I needed when I couldn\'t sleep at 3 AM.',
+    name: 'Jaqueline Rocco',
+    role: 'Mother of Anthony (42 weeks)',
+    content: 'Neomate has been there for me during the scariest time of my life. All I wanted to do was search the internet at first, but the stuff I found was SCARY. The AI gave me the information I needed quickly, clearly, and kindly - and without all the internet clutter.',
     rating: 5,
-    location: 'Boston, MA'
+    location: 'Bronx, NY'
   },
   {
-    name: 'Michael Chen',
-    role: 'Father of twins (28 weeks)',
+    name: 'Anthony Troiano',
+    role: 'Father of Charles (54 weeks)',
     content: 'As a first-time dad in the NICU, I had so many questions. Neomate provided clear, honest answers and helped me feel more confident in my role as a parent.',
     rating: 5,
-    location: 'San Francisco, CA'
-  },
-  {
-    name: 'Dr. Amanda Rodriguez',
-    role: 'Neonatologist',
-    content: 'I recommend Neomate to all my families. It provides accurate information while offering the emotional support that complements our medical care beautifully.',
-    rating: 5,
-    location: 'Children\'s Hospital'
+    location: 'New York, NY'
   }
 ];
 
