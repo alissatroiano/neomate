@@ -2,10 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Radial Timer Animation */
-@keyframes radial-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(180deg); }
+/* Radial Timer Animation - Fixed */
+@keyframes radial-progress {
+  0% { 
+    stroke-dasharray: 0 377;
+  }
+  100% { 
+    stroke-dasharray: 377 377;
+  }
 }
 
 @keyframes data-pulse {
@@ -23,41 +27,35 @@
   position: relative;
   height: 120px;
   width: 120px;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.radial-timer-half {
-  height: 120px;
-  width: 60px;
-  border-radius: 60px 0 0 60px;
-  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+.radial-timer svg {
   position: absolute;
-  animation: radial-spin 8s linear infinite;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg);
 }
 
-.radial-timer-half:nth-of-type(2) {
-  z-index: 2;
-  transform-origin: center right;
-  transform: rotate(180deg);
-  animation-delay: 4s;
+.radial-timer-circle {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 8;
 }
 
-.radial-timer-half:before {
-  content: "";
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  height: 96px;
-  width: 48px;
-  border-radius: 48px 0 0 48px;
-  background: white;
+.radial-timer-progress {
+  fill: none;
+  stroke: url(#gradient);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 0 377;
+  animation: radial-progress 4s ease-in-out infinite;
 }
 
 .radial-timer-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   z-index: 10;
   background: white;
   border-radius: 50%;
@@ -89,11 +87,11 @@
   animation: data-pulse 2s ease-in-out infinite;
 }
 
-.data-bar:nth-child(1) { height: 20px; }
-.data-bar:nth-child(2) { height: 35px; }
-.data-bar:nth-child(3) { height: 50px; }
-.data-bar:nth-child(4) { height: 30px; }
-.data-bar:nth-child(5) { height: 40px; }
+.data-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+.data-bar:nth-child(2) { height: 35px; animation-delay: 0.2s; }
+.data-bar:nth-child(3) { height: 50px; animation-delay: 0.4s; }
+.data-bar:nth-child(4) { height: 30px; animation-delay: 0.6s; }
+.data-bar:nth-child(5) { height: 40px; animation-delay: 0.8s; }
 
 .data-center {
   position: absolute;

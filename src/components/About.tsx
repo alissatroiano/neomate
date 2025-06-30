@@ -75,8 +75,26 @@ export default function About() {
             <div className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300">
               <div className="flex justify-center mb-6">
                 <div className="radial-timer">
-                  <div className="radial-timer-half"></div>
-                  <div className="radial-timer-half"></div>
+                  <svg width="120" height="120">
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#14b8a6" />
+                        <stop offset="100%" stopColor="#06b6d4" />
+                      </linearGradient>
+                    </defs>
+                    <circle 
+                      className="radial-timer-circle"
+                      cx="60" 
+                      cy="60" 
+                      r="52"
+                    />
+                    <circle 
+                      className="radial-timer-progress"
+                      cx="60" 
+                      cy="60" 
+                      r="52"
+                    />
+                  </svg>
                   <div className="radial-timer-center">
                     <Timer className="h-8 w-8 text-teal-600" />
                   </div>
@@ -92,11 +110,11 @@ export default function About() {
               <div className="flex justify-center mb-6">
                 <div className="data-visualization">
                   <div className="data-bars">
-                    <div className="data-bar" style={{ animationDelay: '0s' }}></div>
-                    <div className="data-bar" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="data-bar" style={{ animationDelay: '0.4s' }}></div>
-                    <div className="data-bar" style={{ animationDelay: '0.6s' }}></div>
-                    <div className="data-bar" style={{ animationDelay: '0.8s' }}></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
                   </div>
                   <div className="data-center">
                     <Brain className="h-8 w-8 text-cyan-600" />
