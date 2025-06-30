@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Baby, Shield, Stethoscope } from 'lucide-react';
+import { ArrowRight, Baby, Shield, Stethoscope, Brain } from 'lucide-react';
 
 interface HeroProps {
   onGetStarted: () => void;
@@ -54,8 +54,8 @@ export default function Hero({ onGetStarted }: HeroProps) {
                 <span className="text-sm text-gray-200 font-bold">HIPAA Compliant</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Baby className="h-5 w-5 text-teal-200" />
-                <span className="text-sm font-bold text-gray-200">NICU Approved</span>
+                <Brain className="h-5 w-5 text-teal-200" />
+                <span className="text-sm font-bold text-gray-200">Medically Trained AI</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-cyan-200" />

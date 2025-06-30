@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Users, Stethoscope, Timer } from 'lucide-react';
+import { Award, Users, Stethoscope, Timer, Brain, Database } from 'lucide-react';
 
 const stats = [
   { number: '10,000+', label: 'Families Supported', icon: Users },
@@ -69,28 +69,62 @@ export default function About() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-6">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="bg-gradient-to-r from-teal-500 to-cyan-600 p-3 rounded-xl w-fit mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
-                  {typeof stat.icon === 'function' ? (
-                    <stat.icon />
-                  ) : (
-                    <stat.icon className="h-6 w-6 text-white" />
-                  )}
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-gray-600 font-medium">
-                  {stat.label}
+          {/* Animated Stats */}
+          <div className="grid grid-cols-1 gap-8">
+            {/* 24/7 Support with Radial Timer */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300">
+              <div className="flex justify-center mb-6">
+                <div className="radial-timer">
+                  <svg width="120" height="120">
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#14b8a6" />
+                        <stop offset="100%" stopColor="#06b6d4" />
+                      </linearGradient>
+                    </defs>
+                    <circle 
+                      className="radial-timer-circle"
+                      cx="60" 
+                      cy="60" 
+                      r="52"
+                    />
+                    <circle 
+                      className="radial-timer-progress"
+                      cx="60" 
+                      cy="60" 
+                      r="52"
+                    />
+                  </svg>
+                  <div className="radial-timer-center">
+                    <Timer className="h-8 w-8 text-teal-600" />
+                  </div>
                 </div>
               </div>
-            ))}
+              <div className="text-4xl font-bold text-gray-900 mb-2">24/7</div>
+              <div className="text-gray-600 font-medium mb-2">Always Available Support</div>
+              <div className="text-sm text-gray-500">Text & Voice Chat Ready</div>
+            </div>
+
+            {/* AI/Data with Animated Data Visualization */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300">
+              <div className="flex justify-center mb-6">
+                <div className="data-visualization">
+                  <div className="data-bars">
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                    <div className="data-bar"></div>
+                  </div>
+                  <div className="data-center">
+                    <Brain className="h-8 w-8 text-cyan-600" />
+                  </div>
+                </div>
+              </div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">AI</div>
+              <div className="text-gray-600 font-medium mb-2">Evidence-Based Intelligence</div>
+              <div className="text-sm text-gray-500">Powered by Medical Research</div>
+            </div>
           </div>
         </div>
       </div>
