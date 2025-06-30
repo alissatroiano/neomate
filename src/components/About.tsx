@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Users, Stethoscope, Timer } from 'lucide-react';
+import { Award, Users, Stethoscope, Timer, Brain, Database } from 'lucide-react';
 
 const stats = [
   { number: '10,000+', label: 'Families Supported', icon: Users },
@@ -69,31 +69,152 @@ export default function About() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-6">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="bg-gradient-to-r from-teal-500 to-cyan-600 p-3 rounded-xl w-fit mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
-                  {typeof stat.icon === 'function' ? (
-                    <stat.icon />
-                  ) : (
-                    <stat.icon className="h-6 w-6 text-white" />
-                  )}
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-gray-600 font-medium">
-                  {stat.label}
+          {/* Animated Stats */}
+          <div className="grid grid-cols-1 gap-8">
+            {/* 24/7 Support with Radial Timer */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300">
+              <div className="flex justify-center mb-6">
+                <div className="radial-timer">
+                  <div className="radial-timer-half"></div>
+                  <div className="radial-timer-half"></div>
+                  <div className="radial-timer-center">
+                    <Timer className="h-8 w-8 text-teal-600" />
+                  </div>
                 </div>
               </div>
-            ))}
+              <div className="text-4xl font-bold text-gray-900 mb-2">24/7</div>
+              <div className="text-gray-600 font-medium mb-2">Always Available Support</div>
+              <div className="text-sm text-gray-500">Text & Voice Chat Ready</div>
+            </div>
+
+            {/* AI/Data with Animated Data Visualization */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center group hover:shadow-xl transition-shadow duration-300">
+              <div className="flex justify-center mb-6">
+                <div className="data-visualization">
+                  <div className="data-bars">
+                    <div className="data-bar" style={{ animationDelay: '0s' }}></div>
+                    <div className="data-bar" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="data-bar" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="data-bar" style={{ animationDelay: '0.6s' }}></div>
+                    <div className="data-bar" style={{ animationDelay: '0.8s' }}></div>
+                  </div>
+                  <div className="data-center">
+                    <Brain className="h-8 w-8 text-cyan-600" />
+                  </div>
+                </div>
+              </div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">AI</div>
+              <div className="text-gray-600 font-medium mb-2">Evidence-Based Intelligence</div>
+              <div className="text-sm text-gray-500">Powered by Medical Research</div>
+            </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .radial-timer {
+          position: relative;
+          height: 120px;
+          width: 120px;
+          overflow: hidden;
+        }
+
+        .radial-timer-half {
+          height: 120px;
+          width: 60px;
+          border-radius: 60px 0 0 60px;
+          background: linear-gradient(135deg, #14b8a6, #06b6d4);
+          position: absolute;
+          animation: radial-spin 8s linear infinite;
+        }
+
+        .radial-timer-half:nth-of-type(2) {
+          z-index: 2;
+          transform-origin: center right;
+          transform: rotate(180deg);
+          animation-delay: 4s;
+        }
+
+        .radial-timer-half:before {
+          content: "";
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          height: 96px;
+          width: 48px;
+          border-radius: 48px 0 0 48px;
+          background: white;
+        }
+
+        .radial-timer-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 3;
+          background: white;
+          border-radius: 50%;
+          padding: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes radial-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(180deg); }
+        }
+
+        .data-visualization {
+          position: relative;
+          height: 120px;
+          width: 120px;
+          display: flex;
+          align-items: end;
+          justify-content: center;
+          padding: 20px;
+        }
+
+        .data-bars {
+          display: flex;
+          align-items: end;
+          gap: 4px;
+          height: 60px;
+        }
+
+        .data-bar {
+          width: 8px;
+          background: linear-gradient(135deg, #06b6d4, #0891b2);
+          border-radius: 4px 4px 0 0;
+          animation: data-pulse 2s ease-in-out infinite;
+        }
+
+        .data-bar:nth-child(1) { height: 20px; }
+        .data-bar:nth-child(2) { height: 35px; }
+        .data-bar:nth-child(3) { height: 50px; }
+        .data-bar:nth-child(4) { height: 30px; }
+        .data-bar:nth-child(5) { height: 40px; }
+
+        .data-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: white;
+          border-radius: 50%;
+          padding: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes data-pulse {
+          0%, 100% { 
+            transform: scaleY(1);
+            opacity: 0.7;
+          }
+          50% { 
+            transform: scaleY(1.3);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </section>
   );
 }
